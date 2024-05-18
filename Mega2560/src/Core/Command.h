@@ -1,18 +1,37 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-#include <cstdint>
+#include <stdint.h>
 #include "../Utils/Math.h"
 
 enum class CommandType : uint8_t
 {
-    None = 0, SetLiftPenThresholdDistance, MoveTo, DrawLine, DrawQuadraticCurve, DrawArc
+    None = 0, SetPenWriteSpeed, SetPenMoveSpeed, SetLiftPenThresholdDistance, MoveTo, DrawDot, DrawLine, DrawQuadraticCurve, DrawArc
 };
 
 
 union Command
 {
-    CommandType Type;
+    CommandType Type; // For command that does not require additional data
+
+    struct
+    {
+        CommandType Type;
+        float Speed;
+    } SetPenWriteSpeed;
+
+    struct
+    {
+        CommandType Type;
+        float Speed;
+    } SetPenMoveSpeed;
+
+    struct
+    {
+        CommandType Type;
+        float Distance;
+    } SetLiftPenThresholdDistance;
+
     struct
     {
         CommandType Type;
@@ -22,8 +41,8 @@ union Command
     struct
     {
         CommandType Type;
-        float Distance;
-    } SetLiftPenThresholdDistance;
+        Vector2 Point;
+    } DrawDot;
 
     struct
     {
@@ -48,6 +67,13 @@ union Command
         float EndAngle;
         bool Clockwise;
     } DrawArc;
+
+
+    // Default constructor
+    Command() 
+        : Type(CommandType::None)
+    {
+    }
 };
 
 #endif

@@ -2,7 +2,7 @@
 #define COMMAND_BUFFER_H
 
 #include "../Utils/Math.h"
-#include "../Utils/Buffer.h"
+#include "../Utils/RingBuffer.h"
 #include "Command.h"
 
 
@@ -12,10 +12,16 @@ public:
     CommandBuffer() = default;
     ~CommandBuffer() = default;
 
+    // Configure parameters
+    void SetPenWriteSpeed(float speed);
+    void SetPenMoveSpeed(float speed);
     void SetLiftPenThresholdDistance(float distance);
 
+    // Lifts the pen and moves to the specified point
     void MoveTo(Vector2 point);
 
+    // [Point]: p = point
+    void DrawDot(Vector2 point);
 
     // [Line Function]: p = start + t * (end - start), 0 <= t <= 1
     void DrawLine(Vector2 start, Vector2 end);
@@ -29,16 +35,17 @@ public:
     // [Parametrized Arc Function]: p = center + radius * <cos(t), sin(t)>, startAngle <= t <= endAngle
     void DrawArc(Vector2 center, float radius, float startAngle, float endAngle, bool clockwise);
 
-    void Clear();
+    // Accessors
+    static size_t Capacity() { return s_Capacity; }
+    size_t Size() const { return m_Buffer.Size(); }
+    bool Full() const { return m_Buffer.Full(); }
 
-    size_t GetSize() const { return m_Size; }
-    static size_t GetCapacity() { return s_Capacity; }
-    bool Full() const { return m_Size == s_Capacity; }
+    // Modifiers
+    void Clear() { m_Buffer.Clear(); }
 
 private:
-    static const size_t s_Capacity = 100;
-    Command m_Commands[s_Capacity];
-    size_t m_Size = 0;
+    static const int s_Capacity = 100;
+    RingBuffer<Command, s_Capacity> m_Buffer;
 };
 
 #endif

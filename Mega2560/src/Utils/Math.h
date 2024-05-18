@@ -1,11 +1,14 @@
-#include <math.h>
+#ifndef MATH_H
+#define MATH_H
 
+#include <math.h>
+#include <stdint.h>
 
 // Vector2
 struct Vector2
 {
-    float X = 0.0f;
-    float Y = 0.0f;
+    float X;
+    float Y;
 };
 
 inline Vector2 operator+(const Vector2& lhs, const Vector2& rhs)
@@ -80,3 +83,5 @@ struct QuadraticFunction
         return true;
     }
 };
+
+#endif

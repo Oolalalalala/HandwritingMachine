@@ -6,6 +6,7 @@
 class IO
 {
 public:
+    static void Initialize();
     static void PullData();
 
     static bool IsButtonPressed();

@@ -9,7 +9,7 @@ public:
     WritingMachine(Vector2 initialPenPosition);
     ~WritingMachine() = default;
 
-    void SetCommandBuffer(CommandBuffer& commandBuffer); // Draw data from the command buffer
+    CommandBuffer& GetCommandBuffer() { return m_CommandBuffer; }
 
     void OnUpdate(float dt);
     void Execute();
@@ -20,14 +20,14 @@ private:
     struct Config
     {
         float PenLiftThresholdDistance = 0.0f;
-        float PenWriteVelocity = 0.0f;
-        float PenMoveVelocity = 0.0f;
+        float PenWriteSpeed = 0.0f;
+        float PenMoveSpeed = 0.0f;
     } m_Config;
     
     Vector2 m_PenPosition;
     int m_CommandIndex;
 
-    CommandBuffer* m_CommandBuffer = nullptr;
+    CommandBuffer m_CommandBuffer;
 };
 
 #endif

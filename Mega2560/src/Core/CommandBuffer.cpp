@@ -1,34 +1,64 @@
 #include "CommandBuffer.h"
 
+
+void CommandBuffer::SetPenWriteSpeed(float speed)
+{
+    Command command;
+    command.SetPenWriteSpeed.Type = CommandType::SetPenWriteSpeed;
+    command.SetPenWriteSpeed.Speed = speed;
+    m_Buffer.Push(command);
+}
+
+void CommandBuffer::SetPenMoveSpeed(float speed)
+{
+    Command command;
+    command.SetPenMoveSpeed.Type = CommandType::SetPenMoveSpeed;
+    command.SetPenMoveSpeed.Speed = speed;
+    m_Buffer.Push(command);
+
+}
+
 void CommandBuffer::SetLiftPenThresholdDistance(float distance)
 {
-    m_Commands[m_Size].SetLiftPenThresholdDistance.Type = CommandType::SetLiftPenThresholdDistance;
-    m_Commands[m_Size].SetLiftPenThresholdDistance.Distance = distance;
-    m_Size++;
+    Command command;
+    command.SetLiftPenThresholdDistance.Type = CommandType::SetLiftPenThresholdDistance;
+    command.SetLiftPenThresholdDistance.Distance = distance;
+    m_Buffer.Push(command);
 }
 
 void CommandBuffer::MoveTo(Vector2 point)
 {
-    m_Commands[m_Size].MoveTo.Type = CommandType::MoveTo;
-    m_Commands[m_Size].MoveTo.Point = point;
-    m_Size++;
+    Command command;
+    command.MoveTo.Type = CommandType::MoveTo;
+    command.MoveTo.Point = point;
+    m_Buffer.Push(command);
+}
+
+void CommandBuffer::DrawDot(Vector2 point)
+{
+    Command command;
+    command.DrawDot.Type = CommandType::DrawDot;
+    command.DrawDot.Point = point;
+    m_Buffer.Push(command);
 }
 
 void CommandBuffer::DrawLine(Vector2 start, Vector2 end)
 {
-    m_Commands[m_Size].DrawLine.Type = CommandType::DrawLine;
-    m_Commands[m_Size].DrawLine.Start = start;
-    m_Commands[m_Size].DrawLine.End = end;
-    m_Size++;
+    Command command;
+    command.DrawLine.Type = CommandType::DrawLine;
+    command.DrawLine.Start = start;
+    command.DrawLine.End = end;
+    m_Buffer.Push(command);
 }
 
 // [Parametrized Quadratic Function]: 0 <= t <= 1
 void CommandBuffer::DrawQuadraticCurve(const QuadraticFunction &x, const QuadraticFunction &y)
 {
-    m_Commands[m_Size].DrawQuadraticCurve.Type = CommandType::DrawQuadraticCurve;
-    m_Commands[m_Size].DrawQuadraticCurve.X = x;
-    m_Commands[m_Size].DrawQuadraticCurve.Y = y;
-    m_Size++;
+    Command command;
+    command.DrawQuadraticCurve.Type = CommandType::DrawQuadraticCurve;
+    command.DrawQuadraticCurve.X = x;
+    command.DrawQuadraticCurve.Y = y;
+    m_Buffer.Push(command);
 }
 
 // [Quadratic bezier curve]: p = p0 * (1 - t)^2 + 2 * p1 * (1 - t) * t + p2 * t^2, 0 <= t <= 1
@@ -49,16 +79,12 @@ void CommandBuffer::DrawQuadraticBezier(const Vector2 &p0, const Vector2 &p1, co
 // [Parametrized Arc Function]: p = center + radius * <cos(t), sin(t)>, startAngle <= t <= endAngle
 void CommandBuffer::DrawArc(Vector2 center, float radius, float startAngle, float endAngle, bool clockwise)
 {
-    m_Commands[m_Size].DrawArc.Type = CommandType::DrawArc;
-    m_Commands[m_Size].DrawArc.Center = center;
-    m_Commands[m_Size].DrawArc.Radius = radius;
-    m_Commands[m_Size].DrawArc.StartAngle = startAngle;
-    m_Commands[m_Size].DrawArc.EndAngle = endAngle;
-    m_Commands[m_Size].DrawArc.Clockwise = clockwise;
-    m_Size++;
-}
-
-void CommandBuffer::Clear()
-{
-    m_Size = 0;
+    Command command;
+    command.DrawArc.Type = CommandType::DrawArc;
+    command.DrawArc.Center = center;
+    command.DrawArc.Radius = radius;
+    command.DrawArc.StartAngle = startAngle;
+    command.DrawArc.EndAngle = endAngle;
+    command.DrawArc.Clockwise = clockwise;
+    m_Buffer.Push(command);
 }
