@@ -6,9 +6,10 @@
 class WritingMachine
 {
 public:
-    WritingMachine(Vector2 initialPenPosition);
+    WritingMachine();
     ~WritingMachine() = default;
 
+    void SetInitialPosition(Vector2 position) { m_PenPosition = position; }
     CommandBuffer& GetCommandBuffer() { return m_CommandBuffer; }
 
     void OnUpdate(float dt);

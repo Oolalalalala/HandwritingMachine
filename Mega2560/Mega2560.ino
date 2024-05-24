@@ -1,6 +1,5 @@
 #include "src/Core/Mega2560Program.h"
 
-
 Mega2560Program program;
 
 void setup()

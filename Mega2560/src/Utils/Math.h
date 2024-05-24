@@ -57,6 +57,34 @@ inline Vector2 QuadraticBezier(const Vector2& p0, const Vector2& p1, const Vecto
     return p0 * (1.0f - t) * (1.0f - t) + p1 * 2.0f * (1.0f - t) * t + p2 * t * t;
 }
 
+struct Vector2Int
+{
+    int X;
+    int Y;
+};
+
+inline Vector2Int operator+(const Vector2Int& lhs, const Vector2Int& rhs)
+{
+    return { lhs.X + rhs.X, lhs.Y + rhs.Y };
+}
+
+inline Vector2Int operator-(const Vector2Int& lhs, const Vector2Int& rhs)
+{
+    return { lhs.X - rhs.X, lhs.Y - rhs.Y };
+}
+
+inline Vector2Int operator*(const Vector2Int& lhs, int rhs)
+{
+    return { lhs.X * rhs, lhs.Y * rhs };
+}
+
+inline Vector2Int operator/(const Vector2Int& lhs, int rhs)
+{
+    return { lhs.X / rhs, lhs.Y / rhs };
+}
+
+
+
 
 // QuadraticFunction
 struct QuadraticFunction
