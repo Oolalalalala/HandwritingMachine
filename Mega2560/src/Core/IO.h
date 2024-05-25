@@ -5,13 +5,7 @@
 
 enum class Button
 {
-    None = 0,
-    Enter, 
-    Cancel,
-    JoystickUp,
-    JoystickDown,
-    JoystickLeft,
-    JoystickRight
+    None = 0, Enter, Cancel, JoystickUp, JoystickDown, JoystickLeft, JoystickRight
 };
 
 class IO

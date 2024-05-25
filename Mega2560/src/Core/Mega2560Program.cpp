@@ -1,21 +1,27 @@
 #include "Mega2560Program.h"
 
 #include "IO.h"
-#include "stdlib.h"
-#include "Arduino.h"
+#include "../Utils/Math.h"
+#include <Arduino.h>
 
-static char* s_MainMenuOptions[] = { " Writing", " Tic Tac Toe", " AAAAA", " BBBB", " CCCCC", " DDDDD", " jjj" }; // The beginning space is for the arrow character
-static const int s_MainMenuOptionCount = 7;
-static const char s_ArrowCharacter = 0x7e; // Arrow character
+static char* s_MainMenuOptions[] = { " Writing", " Tic Tac Toe", " AAA", " BBB", " CCC", " DDD", " EEE", " FFF", " GGG", " HHH", " III"};
+static const int s_MainMenuOptionCount = 11;
+static const char s_ArrowCharacter = 0x7E;
 
 void Mega2560Program::Initialize()
 {
     IO::Initialize();
+    m_WritingMachine.Initialize();
+
     m_State = State::MainMenu;
+
+    Serial.begin(115200); // For testing
 }
 
 void Mega2560Program::OnUpdate()
 {
+    IO::PullData();
+
     float dt = m_Timer.Tick();
     
     switch (m_State)
@@ -26,18 +32,19 @@ void Mega2560Program::OnUpdate()
             break;
         }
     }
+
+    // Test
+    m_WritingMachine.OnUpdate(dt);
 }
 
 void Mega2560Program::OnMainMenuEnter()
 {
     m_MainMenuData.SelectedIndex = 0;
-    m_MainMenuData.ViewWindoeBegin = 0;
+    m_MainMenuData.ViewWindowBegin = 0;
 }
 
 void Mega2560Program::OnMainMenuUpdate()
 {
-    IO::PullData();
-
     if (IO::IsButtonDown(Button::Enter))
     {
         switch (m_MainMenuData.SelectedIndex)
@@ -54,24 +61,25 @@ void Mega2560Program::OnMainMenuUpdate()
             }
         }
     }
+    
 
     if (IO::IsButtonDown(Button::JoystickUp))
     {
         m_MainMenuData.SelectedIndex = min(s_MainMenuOptionCount - 1, m_MainMenuData.SelectedIndex + 1);
-        if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindoeBegin + 4)
-            m_MainMenuData.ViewWindoeBegin++;
+        if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin + 4)
+            m_MainMenuData.ViewWindowBegin++;
     }
 
     if (IO::IsButtonDown(Button::JoystickDown))
     {
         m_MainMenuData.SelectedIndex = max(0, m_MainMenuData.SelectedIndex - 1);
-        if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindoeBegin - 1)
-            m_MainMenuData.ViewWindoeBegin--;
+        if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin - 1)
+            m_MainMenuData.ViewWindowBegin--;
     }
 
     for (int i = 0; i < 4; i++)
     {
-        int optionIndex = m_MainMenuData.ViewWindoeBegin + i;
+        int optionIndex = m_MainMenuData.ViewWindowBegin + i;
 
         if (optionIndex == s_MainMenuOptionCount)
             break;

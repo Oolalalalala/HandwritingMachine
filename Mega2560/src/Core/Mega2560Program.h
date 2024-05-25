@@ -14,20 +14,18 @@ public:
     void OnUpdate();
 
 private:
+
     enum class State
     {
         MainMenu,
         Writing,
         TicTacToe
-    };
+    } m_State;
 
-
-private:
-    // Main menu
     struct MainMenuData
     {
         int SelectedIndex = 0;
-        int ViewWindoeBegin = 0;
+        int ViewWindowBegin = 0;
     } m_MainMenuData;
 
     void OnMainMenuEnter();
@@ -36,8 +34,6 @@ private:
 private:
     Timer m_Timer;
     WritingMachine m_WritingMachine;
-
-    State m_State;
 };
 
 #endif 

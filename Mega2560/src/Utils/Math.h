@@ -4,6 +4,9 @@
 #include <math.h>
 #include <stdint.h>
 
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+
 // Vector2
 struct Vector2
 {
@@ -57,6 +60,7 @@ inline Vector2 QuadraticBezier(const Vector2& p0, const Vector2& p1, const Vecto
     return p0 * (1.0f - t) * (1.0f - t) + p1 * 2.0f * (1.0f - t) * t + p2 * t * t;
 }
 
+// Vector2Int
 struct Vector2Int
 {
     int X;
@@ -82,8 +86,6 @@ inline Vector2Int operator/(const Vector2Int& lhs, int rhs)
 {
     return { lhs.X / rhs, lhs.Y / rhs };
 }
-
-
 
 
 // QuadraticFunction

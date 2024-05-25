@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 // A constant size ring buffer
-template<typename T, size_t Cap>
+template<typename T, size_t CAPACITY>
 class RingBuffer 
 {
 public:
@@ -22,7 +22,7 @@ public:
 
     bool Full() const 
     {
-        return m_Size == Cap;
+        return m_Size == CAPACITY;
     }
 
     size_t Size() const 
@@ -30,22 +30,22 @@ public:
         return m_Size;
     }
 
-    static size_t Capacity() 
+    static size_t Capacity()
     {
-        return Cap;
+        return CAPACITY;
     }
 
     void Push(const T& value) 
     {
         m_Buffer[m_Tail] = value;
-        m_Tail = (m_Tail + 1) % Cap;
+        m_Tail = (m_Tail + 1) % CAPACITY;
         m_Size++;
     }
 
     T Pop() 
     {
         T& value = m_Buffer[m_Head];
-        m_Head = (m_Head + 1) % Cap;
+        m_Head = (m_Head + 1) % CAPACITY;
         m_Size--;
         return value;
     }
@@ -59,11 +59,11 @@ public:
 
     T& operator[](size_t index) 
     {
-        return m_Buffer[(m_Head + index) % Cap];
+        return m_Buffer[(m_Head + index) % CAPACITY];
     }
 
 private:
-    T m_Buffer[Cap];
+    T m_Buffer[CAPACITY];
     size_t m_Size;
     size_t m_Head;
     size_t m_Tail;
