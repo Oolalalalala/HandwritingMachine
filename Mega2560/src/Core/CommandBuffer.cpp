@@ -1,36 +1,22 @@
 #include "CommandBuffer.h"
 
 
-void CommandBuffer::SetPenWriteSpeed(float speed)
+void CommandBuffer::SetConfig(float strokeSegmentLength, float strokeSpeed, float hoverSpeed)
 {
     Command command;
-    command.SetPenWriteSpeed.Type = CommandType::SetPenWriteSpeed;
-    command.SetPenWriteSpeed.Speed = speed;
+    command.SetConfig.Type = CommandType::SetConfig;
+    command.SetConfig.StrokeSegmentLength = strokeSegmentLength;
+    command.SetConfig.StrokeSpeed = strokeSpeed;
+    command.SetConfig.HoverSpeed = hoverSpeed;
     m_Buffer.Push(command);
 }
 
-void CommandBuffer::SetPenMoveSpeed(float speed)
+void CommandBuffer::Move(Vector2 start, Vector2 end)
 {
     Command command;
-    command.SetPenMoveSpeed.Type = CommandType::SetPenMoveSpeed;
-    command.SetPenMoveSpeed.Speed = speed;
-    m_Buffer.Push(command);
-
-}
-
-void CommandBuffer::SetLiftPenThresholdDistance(float distance)
-{
-    Command command;
-    command.SetLiftPenThresholdDistance.Type = CommandType::SetLiftPenThresholdDistance;
-    command.SetLiftPenThresholdDistance.Distance = distance;
-    m_Buffer.Push(command);
-}
-
-void CommandBuffer::MoveTo(Vector2 point)
-{
-    Command command;
-    command.MoveTo.Type = CommandType::MoveTo;
-    command.MoveTo.Point = point;
+    command.Move.Type = CommandType::Move;
+    command.Move.Start = start;
+    command.Move.End = end;
     m_Buffer.Push(command);
 }
 
@@ -77,7 +63,7 @@ void CommandBuffer::DrawQuadraticBezier(const Vector2 &p0, const Vector2 &p1, co
 }
 
 // [Parametrized Arc Function]: p = center + radius * <cos(t), sin(t)>, startAngle <= t <= endAngle
-void CommandBuffer::DrawArc(Vector2 center, float radius, float startAngle, float endAngle, bool clockwise)
+void CommandBuffer::DrawArc(Vector2 center, float radius, float startAngle, float endAngle)
 {
     Command command;
     command.DrawArc.Type = CommandType::DrawArc;
@@ -85,6 +71,5 @@ void CommandBuffer::DrawArc(Vector2 center, float radius, float startAngle, floa
     command.DrawArc.Radius = radius;
     command.DrawArc.StartAngle = startAngle;
     command.DrawArc.EndAngle = endAngle;
-    command.DrawArc.Clockwise = clockwise;
     m_Buffer.Push(command);
 }

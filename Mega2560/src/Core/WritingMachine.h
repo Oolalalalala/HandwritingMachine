@@ -2,6 +2,8 @@
 #define WRITING_MACHINE_H
 
 #include "CommandBuffer.h"
+#include "CoreXY.h"
+#include "PenHolder.h"
 
 class WritingMachine
 {
@@ -12,23 +14,32 @@ public:
     void Initialize();
 
     CommandBuffer& GetCommandBuffer() { return m_CommandBuffer; }
-    void SetInitialPenPosition(Vector2 position) { m_PenPosition = position; } // TODO: finish
 
     void OnUpdate(float dt);
-    void Execute();
-    void Pause();
-    bool IsIdle();
+    void Enable(bool enabled);
+    bool IsWriting();
+
+private:
+    void NextStroke();
 
 private:
     struct Config
     {
-        float PenLiftThresholdDistance = 0.0f;
-        float PenWriteSpeed = 0.0f;
-        float PenMoveSpeed = 0.0f;
+        float StrokeSegmentLength = 1.0f; // (mm)
+        float StrokeSpeed = 10.0f; // (mm/s)
+        float HoverSpeed = 10.0f; // (mm/s)
     } m_Config;
+
+    long m_StrokeSegmentTime; // (us) Cached value for the time it takes to draw a stroke segment
+
+    CoreXY m_CoreXY;
+    PenHolder m_PenHolder;
     
-    Vector2 m_PenPosition;
-    int m_CommandIndex;
+    float m_StrokeProgress = 0.0f; // 0.0f - 1.0f
+    bool m_Enabled = false;
+    bool m_Writing = false;
+
+    Command m_ExecutingCommand;
 
     CommandBuffer m_CommandBuffer;
 };

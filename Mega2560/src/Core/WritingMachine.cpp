@@ -1,54 +1,164 @@
 #include "WritingMachine.h"
 
 #include <Arduino.h>
-#include <A4988.h> // A4988 stepper motor driver
 #include <Servo.h> // Servo motor driver
 
-#define STEPPER_STEPS_PER_REVOLUTION 200
-#define STEPPER_MICROSTEPS 16 // Set ms1, ms2, ms3 of A4988 to high
-#define STEPPER_A_DIR_PIN 31
-#define STEPPER_A_STEP_PIN 33
-#define STEPPER_A_ENABLE_PIN 35
-#define STEPPER_B_DIR_PIN 37
-#define STEPPER_B_STEP_PIN 39
-#define STEPPER_B_ENABLE_PIN 41
-#define PEN_SERVO_PIN 3
 
-struct WritingMachineData
-{
-    A4988 StepperMotorA = A4988(STEPPER_STEPS_PER_REVOLUTION, STEPPER_A_DIR_PIN, STEPPER_A_STEP_PIN, STEPPER_A_ENABLE_PIN);
-    A4988 StepperMotorB = A4988(STEPPER_STEPS_PER_REVOLUTION, STEPPER_B_DIR_PIN, STEPPER_B_STEP_PIN, STEPPER_B_ENABLE_PIN);
-    Servo PenServo;
-};
+#define STROKE_SEGMENT_TIME ((long)((STROKE_SEGMENT_LENGTH / m_Config.StrokeSpeed) * 1000000.0f)) // (us)
 
-static WritingMachineData s_Data;
 
 void WritingMachine::Initialize()
 {
-    s_Data.StepperMotorA.begin(60.0f/*RPM*/, STEPPER_MICROSTEPS);
-    s_Data.StepperMotorA.setEnableActiveState(LOW);
+    m_PenHolder.Initialize();
 
-    s_Data.StepperMotorB.begin(60.0f/*RPM*/, STEPPER_MICROSTEPS);
-    s_Data.StepperMotorB.setEnableActiveState(LOW);
-
-    s_Data.PenServo.attach(PEN_SERVO_PIN);
+    m_StrokeSegmentTime = (m_Config.StrokeSegmentLength / m_Config.StrokeSpeed) * 1000000;
 }
 
 void WritingMachine::OnUpdate(float dt)
 {
+    // Wait for last action to finish
+    if (m_CoreXY.IsMoving())
+    {
+        m_CoreXY.OnUpdate();
+        m_Writing = true;
+        return;
+    }
+
+    // Previous command finished
+    if (m_StrokeProgress == 1.0f)
+    {
+        if (m_CommandBuffer.Empty() || !m_Enabled)
+        {
+            m_Writing = false;
+            return;
+        }
+
+        m_ExecutingCommand = m_CommandBuffer.NextCommand();
+        m_StrokeProgress = 0.0f;
+    }
+
+
+    // New command begins
+    if (m_StrokeProgress == 0.0f)
+    {   
+        if (m_ExecutingCommand.Type == CommandType::SetConfig)
+        {
+            m_Config.StrokeSegmentLength = m_ExecutingCommand.SetConfig.StrokeSegmentLength;
+            m_Config.StrokeSpeed = m_ExecutingCommand.SetConfig.StrokeSpeed;
+            m_Config.HoverSpeed = m_ExecutingCommand.SetConfig.HoverSpeed;
+            m_StrokeSegmentTime = (m_Config.StrokeSegmentLength / m_Config.StrokeSpeed) * 1000000;
+            
+            m_StrokeProgress = 1.0f;
+            return;
+        }
+        if (m_ExecutingCommand.Type == CommandType::Move && m_PenHolder.Contacting())
+        {
+            m_PenHolder.Lift();
+            return;
+        }
+        if (m_ExecutingCommand.Type != CommandType::Move && m_PenHolder.Hovering())
+        {
+            m_PenHolder.Drop();
+            return;
+        }
+    }
+
+    // Execute next action
+    NextStroke();
 }
 
-void WritingMachine::Execute()
+void WritingMachine::NextStroke()
 {
+    Vector2 targetPosition;
+    float duration = m_StrokeSegmentTime;
 
+    switch (m_ExecutingCommand.Type)
+    {
+        case CommandType::DrawDot: // No need to move
+        {
+            m_StrokeProgress = 1.0f;
+            return;
+        }
+        case CommandType::Move:
+        {
+            Vector2& start = m_ExecutingCommand.Move.Start;
+            Vector2& end = m_ExecutingCommand.Move.End;
+
+            float length = Distance(start, end);
+            float time = length / m_Config.HoverSpeed;
+
+            // Not devided into segments
+            targetPosition = end;
+            m_StrokeProgress = 1.0f;
+
+            break;
+        }
+        case CommandType::DrawLine:
+        {
+            Vector2& start = m_ExecutingCommand.DrawLine.Start;
+            Vector2& end = m_ExecutingCommand.DrawLine.End;
+
+            float length = Distance(start, end);
+            float time = length / m_Config.StrokeSpeed;
+
+            // Not devided into segments
+            targetPosition = end;
+            m_StrokeProgress = 1.0f;
+
+            break;
+        }
+        case CommandType::DrawQuadraticCurve:
+        {
+            QuadraticFunction& x = m_ExecutingCommand.DrawQuadraticCurve.X;
+            QuadraticFunction& y = m_ExecutingCommand.DrawQuadraticCurve.Y;
+
+            float dx = x.Derivative().Evaluate(m_StrokeProgress);
+            float dy = y.Derivative().Evaluate(m_StrokeProgress);
+            float speed = sqrtf(dx * dx + dy * dy);
+
+            float dt = m_Config.StrokeSegmentLength / speed;
+            m_StrokeProgress += dt;
+            if (m_StrokeProgress > 1.0f)
+            {
+                duration *= (1.0f - (m_StrokeProgress - dt)) / dt;
+                m_StrokeProgress = 1.0f;
+            }
+
+            targetPosition = { x.Evaluate(m_StrokeProgress), y.Evaluate(m_StrokeProgress) };
+            break;
+        }
+        case CommandType::DrawArc:
+        {
+            Vector2& center = m_ExecutingCommand.DrawArc.Center;
+            float& radius = m_ExecutingCommand.DrawArc.Radius;
+            float& startAngle = m_ExecutingCommand.DrawArc.StartAngle;
+            float& endAngle = m_ExecutingCommand.DrawArc.EndAngle;
+
+            float arcLength = fabs(endAngle - startAngle) * radius;
+            float dt = m_Config.StrokeSegmentLength / arcLength;
+            m_StrokeProgress += dt;
+            if (m_StrokeProgress > 1.0f)
+            {
+                duration *= (1.0f - (m_StrokeProgress - dt)) / dt;
+                m_StrokeProgress = 1.0f;
+            }
+
+            float angle = startAngle + (endAngle - startAngle) * m_StrokeProgress;
+            targetPosition = center + Vector2(radius * cos(angle), radius * sin(angle));
+
+            break;
+        }
+    }
+
+    m_CoreXY.Move(targetPosition, duration);
 }
 
-void WritingMachine::Pause()
+void WritingMachine::Enable(bool enabled)
 {
-
+    m_Enabled = enabled;
 }
 
-bool WritingMachine::IsIdle()
+bool WritingMachine::IsWriting()
 {
-
+    return m_Writing;
 }

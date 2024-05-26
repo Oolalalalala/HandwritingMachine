@@ -10,8 +10,18 @@
 // Vector2
 struct Vector2
 {
-    float X;
-    float Y;
+    float X = 0.0f;
+    float Y = 0.0f;
+
+    Vector2() = default;
+    Vector2(float x, float y)
+        : X(x), Y(y)
+    {
+    }
+    Vector2(double x, double y)
+        : X((float)x), Y((float)y)
+    {
+    }
 };
 
 inline Vector2 operator+(const Vector2& lhs, const Vector2& rhs)
@@ -41,7 +51,12 @@ inline float Dot(const Vector2& lhs, const Vector2& rhs)
 
 inline float Length(const Vector2& v)
 {
-    return sqrt(v.X * v.X + v.Y * v.Y);
+    return sqrtf(v.X * v.X + v.Y * v.Y);
+}
+
+inline float Distance(const Vector2& a, const Vector2& b)
+{
+    return Length(a - b);
 }
 
 inline Vector2 Normalize(const Vector2& v)
@@ -63,8 +78,14 @@ inline Vector2 QuadraticBezier(const Vector2& p0, const Vector2& p1, const Vecto
 // Vector2Int
 struct Vector2Int
 {
-    int X;
-    int Y;
+    long X = 0;
+    long Y = 0;
+
+    Vector2Int() = default;
+    Vector2Int(long x, long y)
+        : X(x), Y(y)
+    {
+    }
 };
 
 inline Vector2Int operator+(const Vector2Int& lhs, const Vector2Int& rhs)
@@ -77,23 +98,55 @@ inline Vector2Int operator-(const Vector2Int& lhs, const Vector2Int& rhs)
     return { lhs.X - rhs.X, lhs.Y - rhs.Y };
 }
 
-inline Vector2Int operator*(const Vector2Int& lhs, int rhs)
+inline Vector2Int operator*(const Vector2Int& lhs, long rhs)
 {
     return { lhs.X * rhs, lhs.Y * rhs };
 }
 
-inline Vector2Int operator/(const Vector2Int& lhs, int rhs)
+inline Vector2Int operator/(const Vector2Int& lhs, long rhs)
 {
     return { lhs.X / rhs, lhs.Y / rhs };
 }
 
 
-// QuadraticFunction
+// Linear function
+struct LinearFunction
+{
+    float A = 0.0f;
+    float B = 0.0f;
+
+
+    LinearFunction() = default;
+    
+    LinearFunction(float a, float b)
+        : A(a), B(b)
+    {
+    }
+
+    float Evaluate(float x)
+    {
+        return A * x + B;
+    }
+
+    float Solve(float rhs)
+    {
+        return (rhs - B) / A;
+    }
+};
+
+// Quadratic function
 struct QuadraticFunction
 {
     float A = 0.0f;
     float B = 0.0f;
     float C = 0.0f;
+
+    QuadraticFunction() = default;
+
+    QuadraticFunction(float a, float b, float c)
+        : A(a), B(b), C(c)
+    {
+    }
 
     float Evaluate(float x)
     {
@@ -111,6 +164,11 @@ struct QuadraticFunction
         x2 = (-B - sqrt(delta)) / (2.0f * A);
 
         return true;
+    }
+
+    LinearFunction Derivative()
+    {
+        return { 2.0f * A, B };
     }
 };
 
