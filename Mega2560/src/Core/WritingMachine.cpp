@@ -1,8 +1,5 @@
 #include "WritingMachine.h"
 
-#include <Arduino.h>
-#include <Servo.h> // Servo motor driver
-
 
 #define STROKE_SEGMENT_TIME ((long)((STROKE_SEGMENT_LENGTH / m_Config.StrokeSpeed) * 1000000.0f)) // (us)
 
@@ -16,7 +13,7 @@ void WritingMachine::Initialize()
 
 void WritingMachine::OnUpdate(float dt)
 {
-    // Wait for last action to finish
+    // Wait for last stroke to finish
     if (m_CoreXY.IsMoving())
     {
         m_CoreXY.OnUpdate();
@@ -63,7 +60,6 @@ void WritingMachine::OnUpdate(float dt)
         }
     }
 
-    // Execute next action
     NextStroke();
 }
 

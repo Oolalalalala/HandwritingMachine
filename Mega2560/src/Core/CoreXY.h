@@ -13,6 +13,7 @@ public:
     void Initialize();
     void OnUpdate(); // Should be called as frequently as possible
 
+    void SetOrigin(); // Set the current position as the origin
     void Move(Vector2 position, long duration); // Position in (mm)
     bool IsMoving();
 
@@ -20,7 +21,6 @@ private:
     Vector2Int CalculateStepperCoordinate(Vector2 position); // (mm) to (steps)
 
 private:
-    Vector2 m_Position; // (mm)
     Vector2Int m_StepperCoordinate; // (steps)
 };
 
