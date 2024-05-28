@@ -7,7 +7,7 @@
 class Mega2560Program
 {
 public:
-    Mega2560Program() = default;
+    Mega2560Program();
     ~Mega2560Program() = default;
 
     void Initialize();
@@ -19,7 +19,10 @@ private:
     {
         MainMenu,
         Writing,
-        TicTacToe
+        ManualWriting,
+        TicTacToe,
+        AutoCalibration,
+        ManualCalibration,
     } m_State;
 
     struct MainMenuData
@@ -31,9 +34,21 @@ private:
     void OnMainMenuEnter();
     void OnMainMenuUpdate();
 
+    void OnWritingEnter();
+    void OnWritingUpdate(float dt);
+
+    void OnManualWritingEnter();
+    void OnManualWritingUpdate(float dt);
+
+    void OnManualCalibrationEnter();
+    void OnManualCalibrationUpdate(float dt);
+
 private:
     Timer m_Timer;
     WritingMachine m_WritingMachine;
+
+    CoreXY m_CoreXY;
+    PenHolder m_PenHolder;
 };
 
 #endif 

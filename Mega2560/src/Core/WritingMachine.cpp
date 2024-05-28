@@ -4,10 +4,13 @@
 #define STROKE_SEGMENT_TIME ((long)((STROKE_SEGMENT_LENGTH / m_Config.StrokeSpeed) * 1000000.0f)) // (us)
 
 
+WritingMachine::WritingMachine(CoreXY& coreXY, PenHolder& penHolder)
+    : m_CoreXY(coreXY), m_PenHolder(penHolder)
+{
+}
+
 void WritingMachine::Initialize()
 {
-    m_PenHolder.Initialize();
-
     m_StrokeSegmentTime = (m_Config.StrokeSegmentLength / m_Config.StrokeSpeed) * 1000000;
 }
 
@@ -146,7 +149,7 @@ void WritingMachine::NextStroke()
         }
     }
 
-    m_CoreXY.Move(targetPosition, duration);
+    m_CoreXY.MoveTo(targetPosition, duration);
 }
 
 void WritingMachine::Enable(bool enabled)

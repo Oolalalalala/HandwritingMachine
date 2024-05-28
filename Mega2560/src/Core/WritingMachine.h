@@ -8,7 +8,7 @@
 class WritingMachine
 {
 public:
-    WritingMachine() = default;
+    WritingMachine(CoreXY& coreXY, PenHolder& penHolder);
     ~WritingMachine() = default;
 
     void Initialize();
@@ -32,8 +32,8 @@ private:
 
     long m_StrokeSegmentTime; // (us) Cached value for the time it takes to draw a stroke segment
 
-    CoreXY m_CoreXY;
-    PenHolder m_PenHolder;
+    CoreXY& m_CoreXY;
+    PenHolder& m_PenHolder;
     
     float m_StrokeProgress = 0.0f; // 0.0f - 1.0f
     bool m_Enabled = false;

@@ -108,6 +108,10 @@ inline Vector2Int operator/(const Vector2Int& lhs, long rhs)
     return { lhs.X / rhs, lhs.Y / rhs };
 }
 
+inline float Length(const Vector2Int& v)
+{
+    return sqrtf(v.X * v.X + v.Y * v.Y);
+}
 
 // Linear function
 struct LinearFunction

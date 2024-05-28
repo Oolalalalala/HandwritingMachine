@@ -1,6 +1,8 @@
 #include "CoreXY.h"
 
 #include <Arduino.h>
+#include <A4988.h> // A4988 stepper motor driver
+#include "../Vendor/TimedSyncDriver.h" // Sync control for two stepper motors
 
 #define STEPPER_A_DIR_PIN 31
 #define STEPPER_A_STEP_PIN 33
@@ -28,11 +30,15 @@ static CoreXYData s_Data;
 
 void CoreXY::Initialize()
 {
-    s_Data.StepperMotorA.begin(CAP_RPM, STEPPER_MICROSTEPS);
     s_Data.StepperMotorA.setEnableActiveState(LOW);
+    s_Data.StepperMotorA.begin(CAP_RPM, STEPPER_MICROSTEPS);
 
-    s_Data.StepperMotorB.begin(CAP_RPM, STEPPER_MICROSTEPS);
     s_Data.StepperMotorB.setEnableActiveState(LOW);
+    s_Data.StepperMotorB.begin(CAP_RPM, STEPPER_MICROSTEPS);
+
+
+    m_Position = { 0.0f, 0.0f };
+    m_StepperCoordinate = { 0, 0 };
 }
 
 void CoreXY::OnUpdate()
@@ -46,12 +52,21 @@ void CoreXY::OnUpdate()
     }
 }
 
-void CoreXY::Move(Vector2 position, long duration)
+void CoreXY::Move(Vector2 delta, long duration)
+{
+    Vector2 position = m_Position + delta;
+
+    MoveTo(position, duration);
+}
+
+void CoreXY::MoveTo(Vector2 position, long duration)
 {
     Vector2Int coords = CalculateStepperCoordinate(position);
     Vector2Int delta = coords - m_StepperCoordinate;
 
     s_Data.Controller.startMoveTimed(delta.X, delta.Y, duration);
+
+    m_Position = position;
     m_StepperCoordinate = coords;
 }
 
@@ -61,6 +76,26 @@ Vector2Int CoreXY::CalculateStepperCoordinate(Vector2 position)
     float b = position.X - position.Y;
 
     return { a / DISPLACEMENT_PER_STEP, b / DISPLACEMENT_PER_STEP };
+}
+
+void CoreXY::WaitFinish()
+{
+    while (s_Data.Controller.isRunning())
+    {
+        s_Data.Controller.nextAction();
+    }
+}
+
+void CoreXY::Enable()
+{
+    s_Data.StepperMotorA.enable();
+    s_Data.StepperMotorB.enable();
+}
+
+void CoreXY::Disable()
+{
+    s_Data.StepperMotorA.disable();
+    s_Data.StepperMotorB.disable();
 }
 
 void CoreXY::SetOrigin()

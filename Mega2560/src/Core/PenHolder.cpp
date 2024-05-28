@@ -3,12 +3,18 @@
 #include <Arduino.h>
 
 #define SERVO_PIN 3
-#define PEN_LIFT_TIME 100 // (ms)
+#define PEN_LIFT_ANGLE 0
+#define PEN_DROP_ANGLE 45
+#define PEN_LIFT_TIME 200 // (ms)
 #define PEN_DROP_TIME 300 // (ms)
 
 void PenHolder::Initialize()
 {
+    m_Servo.write(PEN_LIFT_ANGLE); // Set angle before starting the servo
+
     m_Servo.attach(SERVO_PIN);
+
+    m_LiftTime = millis();
 }
 
 void PenHolder::Lift()
@@ -16,7 +22,7 @@ void PenHolder::Lift()
     if (m_LiftTime > m_DropTime)
         return;
     
-    m_Servo.write(0);
+    m_Servo.write(PEN_LIFT_ANGLE);
     m_LiftTime = millis();
 }
 
@@ -25,7 +31,7 @@ void PenHolder::Drop()
     if (m_DropTime > m_LiftTime)
         return;
 
-    m_Servo.write(90);
+    m_Servo.write(PEN_DROP_ANGLE);
     m_DropTime = millis();
 }
 
