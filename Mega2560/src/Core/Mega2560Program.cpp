@@ -4,13 +4,14 @@
 #include "../Utils/Math.h"
 #include <Arduino.h>
 
-#define CALIBRATION_MODE_SPEED 50 // (mm/s)
+#define CALIBRATION_MODE_SPEED 80 // (mm/s)
 #define CALIBRATION_SEGMENT_TIME 0.1f // (s)
-#define CALIBRATION_JOYSTICK_DEADZONE 10
+#define CALIBRATION_JOYSTICK_DEADZONE 100
 
 static char* s_MainMenuOptions[] = { " Writing", " Manual Writing", " Tic Tac Toe", " Auto Calibration", " Manual Calibration" };
 static const int s_MainMenuOptionCount = 5;
-static const char s_ArrowCharacter = 0x7E;
+#define ARROW_CHARACTER 0x7E
+
 
 Mega2560Program::Mega2560Program()
     : m_State(State::MainMenu), m_WritingMachine(m_CoreXY, m_PenHolder)
@@ -126,7 +127,7 @@ void Mega2560Program::OnMainMenuUpdate()
 
         if (optionIndex == m_MainMenuData.SelectedIndex)
         {
-            s_MainMenuOptions[optionIndex][0] = s_ArrowCharacter;
+            s_MainMenuOptions[optionIndex][0] = ARROW_CHARACTER;
             IO::DisplayMessage(i, s_MainMenuOptions[optionIndex]);
         }
         else
@@ -231,7 +232,10 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
 
     if (m_CoreXY.IsMoving())
     {
+        //long x = micros();
         m_CoreXY.OnUpdate();
+        //x = micros() - x;
+        //Serial.println(x);
         return;
     }
 
@@ -254,7 +258,6 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
     
     if (joystick.X == 0 && joystick.Y == 0)
         return;
-
 
     // Map square to circle
     float length = Length(joystick);
