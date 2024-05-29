@@ -47,7 +47,7 @@ private:
     Command NextCommand() { return m_Buffer.Pop(); }
 
 private:
-    static const int s_Capacity = 100;
+    static const int s_Capacity = 30;
     RingBuffer<Command, s_Capacity> m_Buffer;
 };
 

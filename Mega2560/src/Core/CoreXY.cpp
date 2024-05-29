@@ -17,7 +17,7 @@
 #define DISPLACEMENT_PER_STEP (STEPPER_WHEEL_RADIUS * 2 * PI / STEPPER_STEPS_PER_REVOLUTION / STEPPER_MICROSTEPS) // (mm)
 #define CONSECUTIVE_NEXT_ACTION_INTERVALS 0 // (us), if next action interval is less than this, we keep updating the steppers
 
-#define CAP_RPM 120.0f // The max speed of the stepper motor, when too low, may cause the motors to desync
+#define CAP_RPM 240.0f // The max speed of the stepper motor, when too low, may cause the motors to desync
 
 struct CoreXYData
 {
@@ -43,31 +43,12 @@ void CoreXY::Initialize()
 
 void CoreXY::OnUpdate()
 {
-    /*
     while (s_Data.Controller.isRunning())
     {
-        unsigned long x = micros();
         long nextActionInterval = s_Data.Controller.nextAction();
-        
-        Serial.println(micros() - x);
 
         if (nextActionInterval >= CONSECUTIVE_NEXT_ACTION_INTERVALS || nextActionInterval == 0)
             return;
-    }
-    */
-    
-    unsigned long currentTime = micros();
-
-    unsigned long requiredSteps1 = m_TargetSteps[0] * (currentTime - m_BeginTime) / m_Duration;
-    unsigned long requiredSteps2 = m_TargetSteps[1] * (currentTime - m_BeginTime) / m_Duration;
-
-    unsigned long steps1 = requiredSteps1 - m_StepProcessed[0];
-    unsigned long steps2 = requiredSteps2 - m_StepProcessed[1];
-
-    while (steps1 > 0)
-    {
-        
-        steps1--;
     }
 }
 
@@ -76,22 +57,12 @@ void CoreXY::Move(Vector2 delta, long duration)
     Vector2Int coords = CalculateStepperCoordinate(m_Position + delta);
     Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
+    //s_Data.StepperMotorA.setRPM((float)deltaSteps.X / STEPPER_STEPS_PER_REVOLUTION / duration * 1000000.0f * 60.0f);
+    //s_Data.StepperMotorB.setRPM((float)deltaSteps.Y / STEPPER_STEPS_PER_REVOLUTION / duration * 1000000.0f * 60.0f);
     s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
     
     m_Position = m_Position + delta;
     m_StepperCoordinate = coords;
-
-    m_Direction[0] = deltaSteps.X > 0 ? 1 : -1;
-    m_Direction[1] = deltaSteps.Y > 0 ? 1 : -1;
-
-    m_TargetSteps[0] = abs(deltaSteps.X);
-    m_TargetSteps[1] = abs(deltaSteps.Y);
-
-    m_StepProcessed[0] = 0;
-    m_StepProcessed[1] = 0;
-
-    m_BeginTime = micros();
-    m_Duration = duration;
 
     // Debug
     //Serial.print(deltaSteps.X);
@@ -107,11 +78,11 @@ void CoreXY::MoveTo(Vector2 position, long duration)
     Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
     // Debug
-    //Serial.print(deltaSteps.X);
-    //Serial.print(" ");
-    //Serial.print(deltaSteps.Y);
-    //Serial.print(" ");
-    //Serial.println(duration);
+    Serial.print(deltaSteps.X);
+    Serial.print(" ");
+    Serial.print(deltaSteps.Y);
+    Serial.print(" ");
+    Serial.println(duration);
 
     s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
 
@@ -131,9 +102,7 @@ void CoreXY::WaitFinish()
 {
     while (s_Data.Controller.isRunning())
     {
-        unsigned long x = micros();
         s_Data.Controller.nextAction();
-        Serial.println(micros() - x);
     }
 }
 

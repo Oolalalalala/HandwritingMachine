@@ -35,7 +35,7 @@ private:
     CoreXY& m_CoreXY;
     PenHolder& m_PenHolder;
     
-    float m_StrokeProgress = 0.0f; // 0.0f - 1.0f
+    float m_StrokeProgress; // 0.0f - 1.0f
     bool m_Enabled = false;
     bool m_Writing = false;
 

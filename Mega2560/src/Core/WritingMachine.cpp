@@ -1,11 +1,12 @@
 #include "WritingMachine.h"
 
+#include <arduino.h>
 
 #define STROKE_SEGMENT_TIME ((long)((STROKE_SEGMENT_LENGTH / m_Config.StrokeSpeed) * 1000000.0f)) // (us)
 
 
 WritingMachine::WritingMachine(CoreXY& coreXY, PenHolder& penHolder)
-    : m_CoreXY(coreXY), m_PenHolder(penHolder)
+    : m_CoreXY(coreXY), m_PenHolder(penHolder), m_StrokeProgress(1.0f)
 {
 }
 
@@ -64,10 +65,14 @@ void WritingMachine::OnUpdate(float dt)
     }
 
     NextStroke();
+
+    m_CoreXY.WaitFinish();
 }
 
 void WritingMachine::NextStroke()
 {
+    Serial.println("Stroke");
+
     Vector2 targetPosition;
     float duration = m_StrokeSegmentTime;
 
@@ -84,7 +89,7 @@ void WritingMachine::NextStroke()
             Vector2& end = m_ExecutingCommand.Move.End;
 
             float length = Distance(start, end);
-            float time = length / m_Config.HoverSpeed;
+            duration = length / m_Config.HoverSpeed * 1000000;
 
             // Not devided into segments
             targetPosition = end;
@@ -98,7 +103,7 @@ void WritingMachine::NextStroke()
             Vector2& end = m_ExecutingCommand.DrawLine.End;
 
             float length = Distance(start, end);
-            float time = length / m_Config.StrokeSpeed;
+            duration = length / m_Config.StrokeSpeed * 1000000;
 
             // Not devided into segments
             targetPosition = end;

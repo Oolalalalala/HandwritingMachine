@@ -4,7 +4,7 @@
 #include "../Utils/Math.h"
 #include <Arduino.h>
 
-#define CALIBRATION_MODE_SPEED 80 // (mm/s)
+#define CALIBRATION_MODE_SPEED 20 // (mm/s)
 #define CALIBRATION_SEGMENT_TIME 0.1f // (s)
 #define CALIBRATION_JOYSTICK_DEADZONE 100
 
@@ -24,6 +24,11 @@ void Mega2560Program::Initialize()
     m_CoreXY.Initialize();
     m_PenHolder.Initialize();
     m_WritingMachine.Initialize();
+
+    //m_WritingMachine.GetCommandBuffer().DrawLine({0.0f, 0.0f}, {50.0f, 100.0f});
+    m_WritingMachine.GetCommandBuffer().DrawArc({50.0f, 0.0f}, 50.0f, PI, 3 * PI);
+    m_WritingMachine.GetCommandBuffer().DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
+    m_WritingMachine.GetCommandBuffer().DrawArc({80.0f, 0.0f}, 30.0f, PI, 2 * PI);
 
     m_CoreXY.Enable();
 
@@ -76,6 +81,7 @@ void Mega2560Program::OnMainMenuUpdate()
             case 0: // Switch to writing state
             {
                 m_State = State::Writing;
+                OnWritingEnter();
                 return;
             }
             case 1: // Switch to manual writing state
@@ -230,14 +236,14 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
         return;
     }
 
-    if (m_CoreXY.IsMoving())
-    {
-        //long x = micros();
-        m_CoreXY.OnUpdate();
-        //x = micros() - x;
-        //Serial.println(x);
-        return;
-    }
+    //if (m_CoreXY.IsMoving())
+    //{
+    //    //long x = micros();
+    //    m_CoreXY.OnUpdate();
+    //    //x = micros() - x;
+    //    //Serial.praintln(x);
+    //    return;
+    //}
 
     Vector2Int joystick = IO::GetJoystickPosition();
 
@@ -267,12 +273,15 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
     delta = delta / (512 - CALIBRATION_JOYSTICK_DEADZONE) * CALIBRATION_MODE_SPEED * CALIBRATION_SEGMENT_TIME;
 
     m_CoreXY.Move(delta, 1000000.0f * CALIBRATION_SEGMENT_TIME);
+    m_CoreXY.WaitFinish();
 }
 
 void Mega2560Program::OnWritingEnter()
 {
     IO::ClearDisplay();
     IO::DisplayMessage(0, "-Writing Mode");
+
+    m_WritingMachine.Enable(true);
 }
 
 void Mega2560Program::OnWritingUpdate(float dt)

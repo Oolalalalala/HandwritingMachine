@@ -28,12 +28,6 @@ private:
     Vector2 m_Origin;
     Vector2 m_Position; // (mm)
     Vector2Int m_StepperCoordinate; // (steps)
-
-    int m_Direction[2];
-    unsigned long m_TargetSteps[2];
-    unsigned long m_StepProcessed[2];
-    unsigned long m_BeginTime;
-    unsigned long m_Duration;
 };
 
 #endif 
