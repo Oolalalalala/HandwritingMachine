@@ -25,6 +25,7 @@ private:
     Vector2Int CalculateStepperCoordinate(Vector2 position); // (mm) to (steps)
 
 private:
+    Vector2 m_Origin;
     Vector2 m_Position; // (mm)
     Vector2Int m_StepperCoordinate; // (steps)
 };

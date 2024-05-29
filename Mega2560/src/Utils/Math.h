@@ -22,6 +22,10 @@ struct Vector2
         : X((float)x), Y((float)y)
     {
     }
+    Vector2(long x, long y)
+        : X((float)x), Y((float)y)
+    {
+    }
 };
 
 inline Vector2 operator+(const Vector2& lhs, const Vector2& rhs)

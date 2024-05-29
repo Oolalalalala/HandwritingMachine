@@ -5,10 +5,11 @@
 #include <Arduino.h>
 
 #define CALIBRATION_MODE_SPEED 50 // (mm/s)
+#define CALIBRATION_SEGMENT_TIME 0.1f // (s)
 #define CALIBRATION_JOYSTICK_DEADZONE 10
 
 static char* s_MainMenuOptions[] = { " Writing", " Manual Writing", " Tic Tac Toe", " Auto Calibration", " Manual Calibration" };
-static const int s_MainMenuOptionCount = 4;
+static const int s_MainMenuOptionCount = 5;
 static const char s_ArrowCharacter = 0x7E;
 
 Mega2560Program::Mega2560Program()
@@ -25,8 +26,6 @@ void Mega2560Program::Initialize()
 
     m_CoreXY.Enable();
 
-    m_State = State::Writing; // Test
-
     Serial.begin(115200); // For testing
 }
 
@@ -39,6 +38,11 @@ void Mega2560Program::OnUpdate()
         case State::MainMenu:
         {   
             OnMainMenuUpdate();
+            break;
+        }
+        case State::ManualWriting:
+        {
+            OnManualWritingUpdate(dt);
             break;
         }
         case State::ManualCalibration:
@@ -76,6 +80,7 @@ void Mega2560Program::OnMainMenuUpdate()
             case 1: // Switch to manual writing state
             {
                 m_State = State::ManualWriting;
+                OnManualWritingEnter();
                 return;
             }
             case 2: // Switch to tic tac toe state
@@ -159,9 +164,14 @@ void Mega2560Program::OnManualCalibrationUpdate(float dt)
         return;
     }
 
+    if (m_CoreXY.IsMoving())
+    {
+        m_CoreXY.OnUpdate();
+        return;
+    }
 
     Vector2Int joystick = IO::GetJoystickPosition();
-    
+
     // Deadzone
     if (joystick.X > CALIBRATION_JOYSTICK_DEADZONE)
         joystick.X -= CALIBRATION_JOYSTICK_DEADZONE;
@@ -176,12 +186,19 @@ void Mega2560Program::OnManualCalibrationUpdate(float dt)
         joystick.Y += CALIBRATION_JOYSTICK_DEADZONE;
     else
         joystick.Y = 0;
+    
+    if (joystick.X == 0 && joystick.Y == 0)
+        return;
 
 
-    Vector2 delta = Vector2((float)joystick.X, (float)joystick.Y) / Length(joystick) * CALIBRATION_MODE_SPEED * dt;
+    // Map square to circle
+    float length = Length(joystick);
+    float ratio = max(abs(joystick.X), abs(joystick.Y)) / length; // Used to normalize (due to square to circle mapping)
 
-    m_CoreXY.Move(delta, dt);
-    m_CoreXY.WaitFinish();
+    Vector2 delta = Vector2(joystick.X, joystick.Y) * ratio;
+    delta = delta / (512 - CALIBRATION_JOYSTICK_DEADZONE) * CALIBRATION_MODE_SPEED * CALIBRATION_SEGMENT_TIME;
+
+    m_CoreXY.Move(delta, 1000000.0f * CALIBRATION_SEGMENT_TIME);
 }
 
 void Mega2560Program::OnManualWritingEnter()
@@ -196,6 +213,7 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
 {
     IO::PullData();
 
+    // Toggle pen Lift/Drop
     if (IO::IsButtonDown(Button::Enter))
     {
         if (m_PenHolder.Contacting())
@@ -204,14 +222,21 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
             m_PenHolder.Drop();
     }
 
+    // Exit mode
     if (IO::IsButtonDown(Button::Cancel))
     {
         m_State = State::MainMenu;
         return;
     }
 
+    if (m_CoreXY.IsMoving())
+    {
+        m_CoreXY.OnUpdate();
+        return;
+    }
+
     Vector2Int joystick = IO::GetJoystickPosition();
-    
+
     // Deadzone
     if (joystick.X > CALIBRATION_JOYSTICK_DEADZONE)
         joystick.X -= CALIBRATION_JOYSTICK_DEADZONE;
@@ -226,12 +251,19 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
         joystick.Y += CALIBRATION_JOYSTICK_DEADZONE;
     else
         joystick.Y = 0;
+    
+    if (joystick.X == 0 && joystick.Y == 0)
+        return;
 
 
-    Vector2 delta = Vector2((float)joystick.X, (float)joystick.Y) / Length(joystick) * CALIBRATION_MODE_SPEED * dt;
+    // Map square to circle
+    float length = Length(joystick);
+    float ratio = max(abs(joystick.X), abs(joystick.Y)) / length; // Used to normalize (due to square to circle mapping)
 
-    m_CoreXY.Move(delta, dt);
-    m_CoreXY.WaitFinish();
+    Vector2 delta = Vector2(joystick.X, joystick.Y) * ratio;
+    delta = delta / (512 - CALIBRATION_JOYSTICK_DEADZONE) * CALIBRATION_MODE_SPEED * CALIBRATION_SEGMENT_TIME;
+
+    m_CoreXY.Move(delta, 1000000.0f * CALIBRATION_SEGMENT_TIME);
 }
 
 void Mega2560Program::OnWritingEnter()

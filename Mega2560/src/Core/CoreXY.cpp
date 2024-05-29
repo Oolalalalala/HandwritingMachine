@@ -17,7 +17,7 @@
 #define DISPLACEMENT_PER_STEP (STEPPER_WHEEL_RADIUS * 2 * PI / STEPPER_STEPS_PER_REVOLUTION / STEPPER_MICROSTEPS) // (mm)
 #define CONSECUTIVE_NEXT_ACTION_INTERVALS 0 // (us), if next action interval is less than this, we keep updating the steppers
 
-#define CAP_RPM 200.0f // The max speed of the stepper motor, when too low, may cause the motors to desync
+#define CAP_RPM 120.0f // The max speed of the stepper motor, when too low, may cause the motors to desync
 
 struct CoreXYData
 {
@@ -47,26 +47,37 @@ void CoreXY::OnUpdate()
     {
         long nextActionInterval = s_Data.Controller.nextAction();
 
-        if (nextActionInterval >= CONSECUTIVE_NEXT_ACTION_INTERVALS)
+        if (nextActionInterval >= CONSECUTIVE_NEXT_ACTION_INTERVALS || nextActionInterval == 0)
             return;
     }
 }
 
 void CoreXY::Move(Vector2 delta, long duration)
 {
-    Vector2 position = m_Position + delta;
+    Vector2Int coords = CalculateStepperCoordinate(m_Position + delta);
+    Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
-    MoveTo(position, duration);
+    s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
+
+    m_Position = m_Position + delta;
+    m_StepperCoordinate = coords;
 }
 
 void CoreXY::MoveTo(Vector2 position, long duration)
 {
-    Vector2Int coords = CalculateStepperCoordinate(position);
-    Vector2Int delta = coords - m_StepperCoordinate;
+    Vector2Int coords = CalculateStepperCoordinate(m_Origin + position);
+    Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
-    s_Data.Controller.startMoveTimed(delta.X, delta.Y, duration);
+    // Debug
+    //Serial.print(delta.X);
+    //Serial.print(" ");
+    //Serial.print(delta.Y);
+    //Serial.print(" ");
+    //Serial.println(duration);
 
-    m_Position = position;
+    s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
+
+    m_Position = m_Origin + position;
     m_StepperCoordinate = coords;
 }
 
@@ -100,7 +111,7 @@ void CoreXY::Disable()
 
 void CoreXY::SetOrigin()
 {
-    m_StepperCoordinate = { 0, 0 };
+    m_Origin = m_Position;
 }
 
 bool CoreXY::IsMoving()

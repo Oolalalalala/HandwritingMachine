@@ -4,7 +4,7 @@
 
 #define SERVO_PIN 3
 #define PEN_LIFT_ANGLE 0
-#define PEN_DROP_ANGLE 45
+#define PEN_DROP_ANGLE 60
 #define PEN_LIFT_TIME 200 // (ms)
 #define PEN_DROP_TIME 300 // (ms)
 
