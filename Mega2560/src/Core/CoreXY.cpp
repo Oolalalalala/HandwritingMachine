@@ -92,10 +92,10 @@ void CoreXY::MoveTo(Vector2 position, long duration)
 
 Vector2Int CoreXY::CalculateStepperCoordinate(Vector2 position)
 {
-    float a = position.X + position.Y;
-    float b = position.X - position.Y;
+    float a = position.X - position.Y;
+    float b = position.X + position.Y;
 
-    return { a / DISPLACEMENT_PER_STEP, b / DISPLACEMENT_PER_STEP };
+    return { floorf(a / DISPLACEMENT_PER_STEP), floorf(b / DISPLACEMENT_PER_STEP) };
 }
 
 void CoreXY::WaitFinish()

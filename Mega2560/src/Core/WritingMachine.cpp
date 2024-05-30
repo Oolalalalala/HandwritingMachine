@@ -146,9 +146,13 @@ void WritingMachine::NextStroke()
                 duration *= (1.0f - (m_StrokeProgress - dt)) / dt;
                 m_StrokeProgress = 1.0f;
             }
-
             float angle = startAngle + (endAngle - startAngle) * m_StrokeProgress;
             targetPosition = center + Vector2(radius * cos(angle), radius * sin(angle));
+            Serial.print(angle);
+            Serial.print(' ');
+            Serial.print(targetPosition.X);
+            Serial.print(' ');
+            Serial.println(targetPosition.Y);
 
             break;
         }

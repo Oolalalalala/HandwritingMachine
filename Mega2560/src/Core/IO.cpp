@@ -54,7 +54,7 @@ void IO::PullData()
 
     // Joystick
     s_Data.JoystickPosition.X = analogRead(JOYSTICK_X_PIN) - 512;
-    s_Data.JoystickPosition.Y = analogRead(JOYSTICK_Y_PIN) - 512;
+    s_Data.JoystickPosition.Y = 512 - analogRead(JOYSTICK_Y_PIN); // Inverted Y axis
 
     // Set four directions to false
     for (int i = (int)Button::JoystickUp; i <= (int)Button::JoystickRight; i++)

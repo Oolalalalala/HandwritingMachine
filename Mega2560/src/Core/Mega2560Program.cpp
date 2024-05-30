@@ -25,10 +25,13 @@ void Mega2560Program::Initialize()
     m_PenHolder.Initialize();
     m_WritingMachine.Initialize();
 
-    //m_WritingMachine.GetCommandBuffer().DrawLine({0.0f, 0.0f}, {50.0f, 100.0f});
-    m_WritingMachine.GetCommandBuffer().DrawArc({50.0f, 0.0f}, 50.0f, PI, 3 * PI);
-    m_WritingMachine.GetCommandBuffer().DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
-    m_WritingMachine.GetCommandBuffer().DrawArc({80.0f, 0.0f}, 30.0f, PI, 2 * PI);
+    auto& commandBuffer = m_WritingMachine.GetCommandBuffer();
+    //commandBuffer.DrawLine({0.0f, 0.0f}, {50.0f, 100.0f});
+    commandBuffer.DrawQuadraticBezier({0.0f, 0.0f}, {0.0f, 100.0f}, {100.0f, 100.0f});
+    commandBuffer.DrawArc({50.0f, 0.0f}, 50.0f, PI, 3 * PI);
+    commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
+    commandBuffer.DrawArc({80.0f, 0.0f}, 20.0f, PI, 3 * PI);
+    commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, 2 * PI, 3 * PI);
 
     m_CoreXY.Enable();
 
