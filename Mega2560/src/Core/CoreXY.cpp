@@ -78,11 +78,11 @@ void CoreXY::MoveTo(Vector2 position, long duration)
     Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
     // Debug
-    Serial.print(deltaSteps.X);
-    Serial.print(" ");
-    Serial.print(deltaSteps.Y);
-    Serial.print(" ");
-    Serial.println(duration);
+    // Serial.print(deltaSteps.X);
+    // Serial.print(" ");
+    // Serial.print(deltaSteps.Y);
+    // Serial.print(" ");
+    // Serial.println(duration);
 
     s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
 
@@ -95,7 +95,7 @@ Vector2Int CoreXY::CalculateStepperCoordinate(Vector2 position)
     float a = position.X - position.Y;
     float b = position.X + position.Y;
 
-    return { floorf(a / DISPLACEMENT_PER_STEP), floorf(b / DISPLACEMENT_PER_STEP) };
+    return { roundf(a / DISPLACEMENT_PER_STEP), roundf(b / DISPLACEMENT_PER_STEP) };
 }
 
 void CoreXY::WaitFinish()
