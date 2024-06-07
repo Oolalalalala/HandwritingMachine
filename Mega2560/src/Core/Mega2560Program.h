@@ -17,12 +17,15 @@ private:
 
     enum class State
     {
-        MainMenu,
-        Writing,
+        Menu,
+        PCControl,
         ManualWriting,
         TicTacToe,
         AutoCalibration,
         ManualCalibration,
+        SetDrawRegion, 
+        ConnectToWIFI,
+        ShowLocalIP
     } m_State;
 
     struct MainMenuData

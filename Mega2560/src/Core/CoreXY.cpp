@@ -118,7 +118,13 @@ void CoreXY::Disable()
     s_Data.StepperMotorB.disable();
 }
 
-void CoreXY::SetOrigin()
+void CoreXY::SetAbsolutePosition(Vector2 position)
+{
+    m_Position = position;
+    m_StepperCoordinate = CalculateStepperCoordinate(position);
+}
+
+void CoreXY::SetCurrentPositionOrigin()
 {
     m_Origin = m_Position;
 }

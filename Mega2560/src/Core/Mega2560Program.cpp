@@ -8,13 +8,31 @@
 #define CALIBRATION_SEGMENT_TIME 0.1f // (s)
 #define CALIBRATION_JOYSTICK_DEADZONE 100
 
-static char* s_MainMenuOptions[] = { " Writing", " Manual Writing", " Tic Tac Toe", " Auto Calibration", " Manual Calibration" };
-static const int s_MainMenuOptionCount = 5;
+static char s_MenuItems[][21] = { " Modes",                        // 0
+                                      " Control By PC",            // 1
+                                      " Local Modes",              // 2
+                                          " Manual Writing",       // 3
+                                          " Tic Tac Toe",          // 4
+                                      " Internet Modes",           // 5
+                                          " I don't know",         // 6
+                                          " ???",                  // 7 
+                                  " Calibration",                  // 8
+                                      " Set Draw Region(A4)",      // 9
+                                      " Auto Calibration",         // 10 
+                                      " Manual Calibration",       // 11 
+                                  " Settings",                     // 12
+                                      " Connect to WIFI",          // 13
+                                      " Local IP Address"          // 14
+                                };
+
+static const int s_NextItemIndex[] = { 8, 2, 5, 4, 2, 0, 7, 5, 12, 10, 11, 8, 0, 14, 12 }; // Set next item to parent item for the last items
+static const int s_LastItemIndex[] = { -1, -1, 1, -1, 3, 2, -1, 6, 0, -1, 9, 10, 8, -1, 13 }; // Set last item to -1 for the first items
+static const int s_MainMenuOptionCount = sizeof(s_MenuItems) / sizeof(s_MenuItems[0]);
 #define ARROW_CHARACTER 0x7E
 
 
 Mega2560Program::Mega2560Program()
-    : m_State(State::MainMenu), m_WritingMachine(m_CoreXY, m_PenHolder)
+    : m_State(State::Menu), m_WritingMachine(m_CoreXY, m_PenHolder)
 {
 }
 
@@ -44,7 +62,7 @@ void Mega2560Program::OnUpdate()
     
     switch (m_State)
     {
-        case State::MainMenu:
+        case State::Menu:
         {   
             OnMainMenuUpdate();
             break;
@@ -59,7 +77,7 @@ void Mega2560Program::OnUpdate()
             OnManualCalibrationUpdate(dt);
             break;
         }
-        case State::Writing:
+        case State::PCControl:
         {
             OnWritingUpdate(dt);
             break;
@@ -76,74 +94,169 @@ void Mega2560Program::OnMainMenuEnter()
 void Mega2560Program::OnMainMenuUpdate()
 {
     IO::PullData();
+    bool requireRefresh = false;
     
     if (IO::IsButtonDown(Button::Enter))
     {
-        switch (m_MainMenuData.SelectedIndex)
+        if (m_MainMenuData.SelectedIndex == 1)
         {
-            case 0: // Switch to writing state
-            {
-                m_State = State::Writing;
-                OnWritingEnter();
-                return;
-            }
-            case 1: // Switch to manual writing state
-            {
-                m_State = State::ManualWriting;
-                OnManualWritingEnter();
-                return;
-            }
-            case 2: // Switch to tic tac toe state
-            {
-                m_State = State::TicTacToe;
-                return;
-            }
-            case 3: // Switch to auto calibration state
-            {
-                m_State = State::AutoCalibration;
-                return;
-            }
-            case 4: // Switch to manual calibration state
-            {
-                m_State = State::ManualCalibration;
-                OnManualCalibrationEnter();
-                return;
-            }
+            m_State = State::PCControl;
+            OnWritingEnter();
+            return;
         }
+        
+        if (m_MainMenuData.SelectedIndex == 3)
+        {
+            m_State = State::ManualWriting;
+            OnManualWritingEnter();
+            return;
+        }
+
+        if (m_MainMenuData.SelectedIndex == 3)
+        {
+            m_State = State::TicTacToe;
+            // OnTicTacToeEnter();
+            return;
+        }
+
+        if (m_MainMenuData.SelectedIndex == 9)
+        {
+            m_State = State::SetDrawRegion;
+            // OnSetDrawRegionEnter();
+            return;
+        }
+
+        if (m_MainMenuData.SelectedIndex == 10)
+        {
+            m_State = State::AutoCalibration;
+            // OnAutoCalibrationEnter();
+            return;
+        }
+
+        if (m_MainMenuData.SelectedIndex == 11)
+        {
+            m_State = State::ManualCalibration;
+            OnManualCalibrationEnter();
+            return;
+        }
+        
+        if (m_MainMenuData.SelectedIndex == 13)
+        {
+            m_State = State::ConnectToWIFI;
+            // OnConnectToWIFIEnter();
+            return;
+        }
+
+        if (m_MainMenuData.SelectedIndex == 14)
+        {
+            m_State = State::ShowLocalIP;
+            // OnShowLocalIPEnter();
+            return;
+        }
+
+        // Go to sub menu
+        m_MainMenuData.SelectedIndex = s_NextItemIndex[m_MainMenuData.SelectedIndex];
+        m_MainMenuData.ViewWindowBegin = m_MainMenuData.SelectedIndex;
+        requireRefresh = true;
+    }
+
+    if (IO::IsButtonDown(Button::Cancel))
+    {
+        int parentIndex = m_MainMenuData.SelectedIndex;
+
+        while (s_NextItemIndex[parentIndex] > parentIndex);
+        {
+            parentIndex = s_NextItemIndex[parentIndex];
+        } 
+        parentIndex = s_NextItemIndex[parentIndex];
+
+        m_MainMenuData.SelectedIndex = parentIndex;
+        m_MainMenuData.ViewWindowBegin = 0;
+        
+        int viewWindowEnd = m_MainMenuData.ViewWindowBegin;
+        for (int i = 0; i < 3; i++)
+        {
+            if (s_NextItemIndex[viewWindowEnd] < viewWindowEnd)
+                break;
+
+            viewWindowEnd = s_NextItemIndex[viewWindowEnd];
+        }
+
+        while (viewWindowEnd < m_MainMenuData.SelectedIndex)
+        {
+            m_MainMenuData.ViewWindowBegin = s_NextItemIndex[m_MainMenuData.ViewWindowBegin];
+            viewWindowEnd = s_NextItemIndex[viewWindowEnd];
+        }
+
+        requireRefresh = true;
     }
     
-
     if (IO::IsButtonDown(Button::JoystickUp))
     {
-        m_MainMenuData.SelectedIndex = min(s_MainMenuOptionCount - 1, m_MainMenuData.SelectedIndex + 1);
-        if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin + 4)
-            m_MainMenuData.ViewWindowBegin++;
+        if (s_LastItemIndex[m_MainMenuData.SelectedIndex] != -1)
+            m_MainMenuData.SelectedIndex = s_LastItemIndex[m_MainMenuData.SelectedIndex];
+
+        if (m_MainMenuData.ViewWindowBegin > m_MainMenuData.SelectedIndex)
+            m_MainMenuData.ViewWindowBegin = m_MainMenuData.SelectedIndex;
+
+        requireRefresh = true;
     }
 
     if (IO::IsButtonDown(Button::JoystickDown))
     {
-        m_MainMenuData.SelectedIndex = max(0, m_MainMenuData.SelectedIndex - 1);
-        if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin - 1)
-            m_MainMenuData.ViewWindowBegin--;
+        if (s_NextItemIndex[m_MainMenuData.SelectedIndex] > m_MainMenuData.SelectedIndex)
+            m_MainMenuData.SelectedIndex = s_NextItemIndex[m_MainMenuData.SelectedIndex];
+
+        int viewWindowEnd = m_MainMenuData.ViewWindowBegin;
+        for (int i = 0; i < 3; i++)
+        {
+            if (s_NextItemIndex[viewWindowEnd] < viewWindowEnd)
+                break;
+
+            viewWindowEnd = s_NextItemIndex[viewWindowEnd];
+        }
+
+        if (viewWindowEnd < m_MainMenuData.SelectedIndex)
+            m_MainMenuData.ViewWindowBegin = s_NextItemIndex[m_MainMenuData.ViewWindowBegin];
+
+        requireRefresh = true;
     }
 
-    for (int i = 0; i < 4; i++)
+    //if (IO::IsButtonDown(Button::JoystickUp))
+    //{
+    //    m_MainMenuData.SelectedIndex = min(s_MainMenuOptionCount - 1, m_MainMenuData.SelectedIndex + 1);
+    //    if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin + 4)
+    //        m_MainMenuData.ViewWindowBegin++;
+    //}
+    //
+    //if (IO::IsButtonDown(Button::JoystickDown))
+    //{
+    //    m_MainMenuData.SelectedIndex = max(0, m_MainMenuData.SelectedIndex - 1);
+    //    if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin - 1)
+    //        m_MainMenuData.ViewWindowBegin--;
+    //}
+
+    if (!requireRefresh)
+        return;
+    
+    
+    IO::ClearDisplay();
+
+    for (int i = 0, optionIndex = m_MainMenuData.ViewWindowBegin; i < 4; i++, optionIndex = s_NextItemIndex[optionIndex])
     {
-        int optionIndex = m_MainMenuData.ViewWindowBegin + i;
-
-        if (optionIndex == s_MainMenuOptionCount)
-            break;
-
         if (optionIndex == m_MainMenuData.SelectedIndex)
         {
-            s_MainMenuOptions[optionIndex][0] = ARROW_CHARACTER;
-            IO::DisplayMessage(i, s_MainMenuOptions[optionIndex]);
+            s_MenuItems[optionIndex][0] = ARROW_CHARACTER;
+            IO::DisplayMessage(i, s_MenuItems[optionIndex]);
         }
         else
         {
-            s_MainMenuOptions[optionIndex][0] = ' ';
-            IO::DisplayMessage(i, s_MainMenuOptions[optionIndex]);
+            s_MenuItems[optionIndex][0] = ' ';
+            IO::DisplayMessage(i, s_MenuItems[optionIndex]);
         }
+
+        if (optionIndex > s_NextItemIndex[optionIndex])
+            break;
     }
 }
 
@@ -163,14 +276,14 @@ void Mega2560Program::OnManualCalibrationUpdate(float dt)
 
     if (IO::IsButtonDown(Button::Enter))
     {
-        m_CoreXY.SetOrigin();
-        m_State = State::MainMenu;
+        m_CoreXY.SetCurrentPositionOrigin();
+        m_State = State::Menu;
         return;
     }
 
     if (IO::IsButtonDown(Button::Cancel))
     {
-        m_State = State::MainMenu;
+        m_State = State::Menu;
         return;
     }
 
@@ -235,7 +348,7 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
     // Exit mode
     if (IO::IsButtonDown(Button::Cancel))
     {
-        m_State = State::MainMenu;
+        m_State = State::Menu;
         return;
     }
 
