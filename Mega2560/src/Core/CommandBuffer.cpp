@@ -3,8 +3,8 @@
 
 void CommandBuffer::SetConfig(float strokeSegmentLength, float strokeSpeed, float hoverSpeed)
 {
-    Command command;
-    command.SetConfig.Type = CommandType::SetConfig;
+    MachineCommand command;
+    command.SetConfig.Type = MachineCommandType::SetConfig;
     command.SetConfig.StrokeSegmentLength = strokeSegmentLength;
     command.SetConfig.StrokeSpeed = strokeSpeed;
     command.SetConfig.HoverSpeed = hoverSpeed;
@@ -13,8 +13,8 @@ void CommandBuffer::SetConfig(float strokeSegmentLength, float strokeSpeed, floa
 
 void CommandBuffer::Move(Vector2 start, Vector2 end)
 {
-    Command command;
-    command.Move.Type = CommandType::Move;
+    MachineCommand command;
+    command.Move.Type = MachineCommandType::Move;
     command.Move.Start = start;
     command.Move.End = end;
     m_Buffer.Push(command);
@@ -22,16 +22,16 @@ void CommandBuffer::Move(Vector2 start, Vector2 end)
 
 void CommandBuffer::DrawDot(Vector2 point)
 {
-    Command command;
-    command.DrawDot.Type = CommandType::DrawDot;
+    MachineCommand command;
+    command.DrawDot.Type = MachineCommandType::DrawDot;
     command.DrawDot.Point = point;
     m_Buffer.Push(command);
 }
 
 void CommandBuffer::DrawLine(Vector2 start, Vector2 end)
 {
-    Command command;
-    command.DrawLine.Type = CommandType::DrawLine;
+    MachineCommand command;
+    command.DrawLine.Type = MachineCommandType::DrawLine;
     command.DrawLine.Start = start;
     command.DrawLine.End = end;
     m_Buffer.Push(command);
@@ -40,8 +40,8 @@ void CommandBuffer::DrawLine(Vector2 start, Vector2 end)
 // [Parametrized Quadratic Function]: 0 <= t <= 1
 void CommandBuffer::DrawQuadraticCurve(const QuadraticFunction &x, const QuadraticFunction &y)
 {
-    Command command;
-    command.DrawQuadraticCurve.Type = CommandType::DrawQuadraticCurve;
+    MachineCommand command;
+    command.DrawQuadraticCurve.Type = MachineCommandType::DrawQuadraticCurve;
     command.DrawQuadraticCurve.X = x;
     command.DrawQuadraticCurve.Y = y;
     m_Buffer.Push(command);
@@ -65,8 +65,8 @@ void CommandBuffer::DrawQuadraticBezier(const Vector2 &p0, const Vector2 &p1, co
 // [Parametrized Arc Function]: p = center + radius * <cos(t), sin(t)>, startAngle <= t <= endAngle
 void CommandBuffer::DrawArc(Vector2 center, float radius, float startAngle, float endAngle)
 {
-    Command command;
-    command.DrawArc.Type = CommandType::DrawArc;
+    MachineCommand command;
+    command.DrawArc.Type = MachineCommandType::DrawArc;
     command.DrawArc.Center = center;
     command.DrawArc.Radius = radius;
     command.DrawArc.StartAngle = startAngle;

@@ -44,11 +44,11 @@ public:
 
 private:
     friend class WritingMachine;
-    Command NextCommand() { return m_Buffer.Pop(); }
+    MachineCommand NextCommand() { return m_Buffer.Pop(); }
 
 private:
     static const int s_Capacity = 30;
-    RingBuffer<Command, s_Capacity> m_Buffer;
+    RingBuffer<MachineCommand, s_Capacity> m_Buffer;
 };
 
 #endif

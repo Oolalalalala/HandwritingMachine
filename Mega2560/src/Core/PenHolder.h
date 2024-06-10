@@ -1,7 +1,7 @@
 #ifndef PEN_HOLDER_H
 #define PEN_HOLDER_H
 
-#include <Servo.h>
+#include <ESP32Servo.h>
 
 class PenHolder
 {

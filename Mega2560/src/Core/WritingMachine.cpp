@@ -42,7 +42,7 @@ void WritingMachine::OnUpdate(float dt)
     // New command begins
     if (m_StrokeProgress == 0.0f)
     {   
-        if (m_ExecutingCommand.Type == CommandType::SetConfig)
+        if (m_ExecutingCommand.Type == MachineCommandType::SetConfig)
         {
             m_Config.StrokeSegmentLength = m_ExecutingCommand.SetConfig.StrokeSegmentLength;
             m_Config.StrokeSpeed = m_ExecutingCommand.SetConfig.StrokeSpeed;
@@ -52,12 +52,12 @@ void WritingMachine::OnUpdate(float dt)
             m_StrokeProgress = 1.0f;
             return;
         }
-        if (m_ExecutingCommand.Type == CommandType::Move && m_PenHolder.Contacting())
+        if (m_ExecutingCommand.Type == MachineCommandType::Move && m_PenHolder.Contacting())
         {
             m_PenHolder.Lift();
             return;
         }
-        if (m_ExecutingCommand.Type != CommandType::Move && m_PenHolder.Hovering())
+        if (m_ExecutingCommand.Type != MachineCommandType::Move && m_PenHolder.Hovering())
         {
             m_PenHolder.Drop();
             return;
@@ -78,12 +78,12 @@ void WritingMachine::NextStroke()
 
     switch (m_ExecutingCommand.Type)
     {
-        case CommandType::DrawDot: // No need to move
+        case MachineCommandType::DrawDot: // No need to move
         {
             m_StrokeProgress = 1.0f;
             return;
         }
-        case CommandType::Move:
+        case MachineCommandType::Move:
         {
             Vector2& start = m_ExecutingCommand.Move.Start;
             Vector2& end = m_ExecutingCommand.Move.End;
@@ -97,7 +97,7 @@ void WritingMachine::NextStroke()
 
             break;
         }
-        case CommandType::DrawLine:
+        case MachineCommandType::DrawLine:
         {
             Vector2& start = m_ExecutingCommand.DrawLine.Start;
             Vector2& end = m_ExecutingCommand.DrawLine.End;
@@ -111,7 +111,7 @@ void WritingMachine::NextStroke()
 
             break;
         }
-        case CommandType::DrawQuadraticCurve:
+        case MachineCommandType::DrawQuadraticCurve:
         {
             QuadraticFunction& x = m_ExecutingCommand.DrawQuadraticCurve.X;
             QuadraticFunction& y = m_ExecutingCommand.DrawQuadraticCurve.Y;
@@ -131,7 +131,7 @@ void WritingMachine::NextStroke()
             targetPosition = { x.Evaluate(m_StrokeProgress), y.Evaluate(m_StrokeProgress) };
             break;
         }
-        case CommandType::DrawArc:
+        case MachineCommandType::DrawArc:
         {
             Vector2& center = m_ExecutingCommand.DrawArc.Center;
             float& radius = m_ExecutingCommand.DrawArc.Radius;

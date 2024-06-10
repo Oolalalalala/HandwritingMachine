@@ -4,8 +4,8 @@
 #include <math.h>
 #include <stdint.h>
 
-//#define min(a,b) ((a)<(b)?(a):(b))
-//#define max(a,b) ((a)>(b)?(a):(b))
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
 
 // Vector2
 struct Vector2

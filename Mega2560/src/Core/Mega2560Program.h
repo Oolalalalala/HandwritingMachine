@@ -1,7 +1,7 @@
 #ifndef MEGA2560_PROGRAM_H
 #define MEGA2560_PROGRAM_H
 
-#include "Timer.h"
+#include "../Utils/Timer.h"
 #include "WritingMachine.h"
 
 class Mega2560Program
@@ -32,6 +32,8 @@ private:
     {
         int SelectedIndex = 0;
         int ViewWindowBegin = 0;
+        bool RequireRefreshScreen = false;
+        unsigned long LastInputTime = 0;
     } m_MainMenuData;
 
     void OnMainMenuEnter();

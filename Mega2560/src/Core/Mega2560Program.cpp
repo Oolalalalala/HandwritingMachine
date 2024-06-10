@@ -4,6 +4,8 @@
 #include "../Utils/Math.h"
 #include <Arduino.h>
 
+#define MINIMUM_INPUT_INTERVAL 100 // (ms)
+
 #define CALIBRATION_MODE_SPEED 20 // (mm/s)
 #define CALIBRATION_SEGMENT_TIME 0.1f // (s)
 #define CALIBRATION_JOYSTICK_DEADZONE 100
@@ -42,23 +44,24 @@ void Mega2560Program::Initialize()
     m_CoreXY.Initialize();
     m_PenHolder.Initialize();
     m_WritingMachine.Initialize();
+    OnMainMenuEnter();
 
     auto& commandBuffer = m_WritingMachine.GetCommandBuffer();
     //commandBuffer.DrawLine({0.0f, 0.0f}, {50.0f, 100.0f});
-    commandBuffer.DrawQuadraticBezier({0.0f, 0.0f}, {0.0f, 100.0f}, {100.0f, 100.0f});
-    commandBuffer.DrawArc({50.0f, 0.0f}, 50.0f, PI, 3 * PI);
-    commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
-    commandBuffer.DrawArc({80.0f, 0.0f}, 20.0f, PI, 3 * PI);
-    commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, 2 * PI, 3 * PI);
+    //commandBuffer.DrawQuadraticBezier({0.0f, 0.0f}, {0.0f, 100.0f}, {100.0f, 100.0f});
+    //commandBuffer.DrawArc({50.0f, 0.0f}, 50.0f, PI, 3 * PI);
+    //commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
+    //commandBuffer.DrawArc({80.0f, 0.0f}, 20.0f, PI, 3 * PI);
+    //commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, 2 * PI, 3 * PI);
 
-    m_CoreXY.Enable();
+    //m_CoreXY.Enable();
 
-    Serial.begin(115200); // For testing
 }
 
 void Mega2560Program::OnUpdate()
 {
     float dt = m_Timer.Tick();
+
     
     switch (m_State)
     {
@@ -89,15 +92,20 @@ void Mega2560Program::OnMainMenuEnter()
 {
     m_MainMenuData.SelectedIndex = 0;
     m_MainMenuData.ViewWindowBegin = 0;
+    m_MainMenuData.RequireRefreshScreen = true;
 }
 
 void Mega2560Program::OnMainMenuUpdate()
 {
     IO::PullData();
-    bool requireRefresh = false;
     
+    if (!m_MainMenuData.RequireRefreshScreen && millis() - m_MainMenuData.LastInputTime < MINIMUM_INPUT_INTERVAL)
+        return;
+
     if (IO::IsButtonDown(Button::Enter))
     {
+        m_MainMenuData.LastInputTime = millis();
+
         if (m_MainMenuData.SelectedIndex == 1)
         {
             m_State = State::PCControl;
@@ -155,55 +163,65 @@ void Mega2560Program::OnMainMenuUpdate()
         }
 
         // Go to sub menu
-        m_MainMenuData.SelectedIndex = s_NextItemIndex[m_MainMenuData.SelectedIndex];
+        m_MainMenuData.SelectedIndex++;
+        m_MainMenuData.SelectedIndex %= s_MainMenuOptionCount;
         m_MainMenuData.ViewWindowBegin = m_MainMenuData.SelectedIndex;
-        requireRefresh = true;
+        m_MainMenuData.RequireRefreshScreen = true;
     }
 
     if (IO::IsButtonDown(Button::Cancel))
     {
+        m_MainMenuData.LastInputTime = millis();
+        
+        Serial.println("Cancel");
         int parentIndex = m_MainMenuData.SelectedIndex;
 
-        while (s_NextItemIndex[parentIndex] > parentIndex);
+        while (s_NextItemIndex[parentIndex] > parentIndex)
         {
             parentIndex = s_NextItemIndex[parentIndex];
         } 
+
         parentIndex = s_NextItemIndex[parentIndex];
-
         m_MainMenuData.SelectedIndex = parentIndex;
-        m_MainMenuData.ViewWindowBegin = 0;
+        m_MainMenuData.ViewWindowBegin = parentIndex;
         
-        int viewWindowEnd = m_MainMenuData.ViewWindowBegin;
-        for (int i = 0; i < 3; i++)
+        while (s_LastItemIndex[m_MainMenuData.ViewWindowBegin] != -1)
         {
-            if (s_NextItemIndex[viewWindowEnd] < viewWindowEnd)
-                break;
+            int viewWindowEnd = m_MainMenuData.ViewWindowBegin;
+            for (int i = 0; i < 3; i++)
+            {
+                if (s_NextItemIndex[viewWindowEnd] < viewWindowEnd)
+                    break;
 
-            viewWindowEnd = s_NextItemIndex[viewWindowEnd];
+                viewWindowEnd = s_NextItemIndex[viewWindowEnd];
+            }
+
+            if (viewWindowEnd > m_MainMenuData.SelectedIndex)
+            {
+                m_MainMenuData.ViewWindowBegin = s_LastItemIndex[m_MainMenuData.ViewWindowBegin];
+            }
         }
 
-        while (viewWindowEnd < m_MainMenuData.SelectedIndex)
-        {
-            m_MainMenuData.ViewWindowBegin = s_NextItemIndex[m_MainMenuData.ViewWindowBegin];
-            viewWindowEnd = s_NextItemIndex[viewWindowEnd];
-        }
-
-        requireRefresh = true;
+        m_MainMenuData.RequireRefreshScreen = true;
     }
     
     if (IO::IsButtonDown(Button::JoystickUp))
     {
+        m_MainMenuData.LastInputTime = millis();
+        
         if (s_LastItemIndex[m_MainMenuData.SelectedIndex] != -1)
             m_MainMenuData.SelectedIndex = s_LastItemIndex[m_MainMenuData.SelectedIndex];
 
         if (m_MainMenuData.ViewWindowBegin > m_MainMenuData.SelectedIndex)
             m_MainMenuData.ViewWindowBegin = m_MainMenuData.SelectedIndex;
 
-        requireRefresh = true;
+        m_MainMenuData.RequireRefreshScreen = true;
     }
 
     if (IO::IsButtonDown(Button::JoystickDown))
     {
+        m_MainMenuData.LastInputTime = millis();
+        
         if (s_NextItemIndex[m_MainMenuData.SelectedIndex] > m_MainMenuData.SelectedIndex)
             m_MainMenuData.SelectedIndex = s_NextItemIndex[m_MainMenuData.SelectedIndex];
 
@@ -219,26 +237,16 @@ void Mega2560Program::OnMainMenuUpdate()
         if (viewWindowEnd < m_MainMenuData.SelectedIndex)
             m_MainMenuData.ViewWindowBegin = s_NextItemIndex[m_MainMenuData.ViewWindowBegin];
 
-        requireRefresh = true;
+        m_MainMenuData.RequireRefreshScreen = true;
     }
 
-    //if (IO::IsButtonDown(Button::JoystickUp))
-    //{
-    //    m_MainMenuData.SelectedIndex = min(s_MainMenuOptionCount - 1, m_MainMenuData.SelectedIndex + 1);
-    //    if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin + 4)
-    //        m_MainMenuData.ViewWindowBegin++;
-    //}
-    //
-    //if (IO::IsButtonDown(Button::JoystickDown))
-    //{
-    //    m_MainMenuData.SelectedIndex = max(0, m_MainMenuData.SelectedIndex - 1);
-    //    if (m_MainMenuData.SelectedIndex == m_MainMenuData.ViewWindowBegin - 1)
-    //        m_MainMenuData.ViewWindowBegin--;
-    //}
 
-    if (!requireRefresh)
+    if (!m_MainMenuData.RequireRefreshScreen)
         return;
-    
+
+    Serial.print(m_MainMenuData.SelectedIndex);
+    Serial.print(' ');
+    Serial.println(m_MainMenuData.ViewWindowBegin);
     
     IO::ClearDisplay();
 
@@ -258,6 +266,8 @@ void Mega2560Program::OnMainMenuUpdate()
         if (optionIndex > s_NextItemIndex[optionIndex])
             break;
     }
+
+    m_MainMenuData.RequireRefreshScreen = false;
 }
 
 void Mega2560Program::OnManualCalibrationEnter()

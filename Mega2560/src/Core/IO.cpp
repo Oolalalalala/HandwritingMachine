@@ -8,10 +8,10 @@
 
 
 
-#define JOYSTICK_X_PIN A0
-#define JOYSTICK_Y_PIN A1
-#define ENTER_BUTTON_PIN 32
-#define CANCEL_BUTTON_PIN 34
+#define JOYSTICK_X_PIN 36
+#define JOYSTICK_Y_PIN 39
+#define ENTER_BUTTON_PIN 34
+#define CANCEL_BUTTON_PIN 35
 
 
 struct IOData
@@ -30,6 +30,11 @@ static IOData s_Data;
 
 void IO::Initialize()
 {
+    pinMode(JOYSTICK_X_PIN, INPUT);
+    pinMode(JOYSTICK_Y_PIN, INPUT);
+    pinMode(ENTER_BUTTON_PIN, INPUT);
+    pinMode(CANCEL_BUTTON_PIN, INPUT);
+
     s_Data.LCD.begin(20, 4);
     s_Data.LCD.clear();
 
@@ -51,10 +56,9 @@ void IO::PullData()
     s_Data.ButtonStates[(int)Button::Enter] = digitalRead(ENTER_BUTTON_PIN);
     s_Data.ButtonStates[(int)Button::Cancel] = digitalRead(CANCEL_BUTTON_PIN);
 
-
     // Joystick
-    s_Data.JoystickPosition.X = analogRead(JOYSTICK_X_PIN) - 512;
-    s_Data.JoystickPosition.Y = 512 - analogRead(JOYSTICK_Y_PIN); // Inverted Y axis
+    s_Data.JoystickPosition.X = analogRead(JOYSTICK_X_PIN) - 2048;
+    s_Data.JoystickPosition.Y = 2048 - analogRead(JOYSTICK_Y_PIN); // Inverted Y axis
 
     // Set four directions to false
     for (int i = (int)Button::JoystickUp; i <= (int)Button::JoystickRight; i++)
@@ -63,12 +67,12 @@ void IO::PullData()
     // Determine joystick direction
     if (abs(s_Data.JoystickPosition.X) > abs(s_Data.JoystickPosition.Y))
     {
-        if (s_Data.JoystickPosition.X > 256)
+        if (s_Data.JoystickPosition.X > 1024)
         {
             s_Data.JoystickDirection = { 1, 0 };
             s_Data.ButtonStates[(int)Button::JoystickRight] = true;
         }
-        else if (s_Data.JoystickPosition.X < -256)
+        else if (s_Data.JoystickPosition.X < -1024)
         {
             s_Data.JoystickDirection = { -1, 0 };
             s_Data.ButtonStates[(int)Button::JoystickLeft] = true;
@@ -78,12 +82,12 @@ void IO::PullData()
     }
     else
     {
-        if (s_Data.JoystickPosition.Y > 256)
+        if (s_Data.JoystickPosition.Y > 1024)
         {
             s_Data.JoystickDirection = { 0, 1 };
             s_Data.ButtonStates[(int)Button::JoystickUp] = true;
         }
-        else if (s_Data.JoystickPosition.Y < -256)
+        else if (s_Data.JoystickPosition.Y < -1024)
         {
             s_Data.JoystickDirection = { 0, -1 };
             s_Data.ButtonStates[(int)Button::JoystickDown] = true;
@@ -91,6 +95,7 @@ void IO::PullData()
         else
             s_Data.JoystickDirection = { 0, 0 };
     }
+
 }
 
 bool IO::IsButtonPressed(Button button)
@@ -127,7 +132,7 @@ void IO::DisplayMessage(int line, const char* message)
 {
     // Copy string to buffer
     memset(s_Data.WriteBuffer, ' ', 20);
-    memcpy(s_Data.WriteBuffer, message, min(20, strlen(message))); 
+    memcpy(s_Data.WriteBuffer, message, min(20, (int)strlen(message))); 
 
     s_Data.LCD.setCursor(0, line);
     s_Data.LCD.print(s_Data.WriteBuffer);

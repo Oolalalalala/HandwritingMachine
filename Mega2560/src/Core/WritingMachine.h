@@ -39,7 +39,7 @@ private:
     bool m_Enabled = false;
     bool m_Writing = false;
 
-    Command m_ExecutingCommand;
+    MachineCommand m_ExecutingCommand;
 
     CommandBuffer m_CommandBuffer;
 };
