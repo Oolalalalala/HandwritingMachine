@@ -1,9 +1,9 @@
 import socket
 
 # Constants
-acknowledge_byte = b'0x06'
-transmission_begin_byte = b'0x02'
-transmission_end_byte = b'0x03'
+acknowledge_byte = b'\x06'
+transmission_begin_byte = b'\x01'
+transmission_end_byte = b'\x00' # 0 for the segment length means end of transmission
 recieve_end_buffer_size = 256 # Max value: 256
 
 
@@ -26,10 +26,14 @@ class WifiInterface:
         self.client.send(transmission_begin_byte)
         self.__wait_for_acknowledge()
 
+        print("Acknowledge received")
+
         while (len(data) > 0):
             segment_length = min(len(data), recieve_end_buffer_size - 1)
 
-            self.client.send(segment_length.to_bytes(1))
+            print(f"Sending {segment_length} bytes")
+
+            self.client.send(segment_length.to_bytes(1, byteorder='big'))
             self.client.send(data[:segment_length])
 
             data = data[segment_length:]
@@ -47,7 +51,7 @@ class WifiInterface:
     
 
 if __name__ == '__main__':
-    wifi = WifiInterface("192.168.0.1", 80)
+    wifi = WifiInterface("192.168.225.42", 8000)
     print(wifi.connect())
 
     wifi.send_bytes(b'Hello World')

@@ -1,4 +1,4 @@
-#include "Mega2560Program.h"
+#include "Esp32Program.h"
 
 #include "IO.h"
 #include "../Utils/Math.h"
@@ -33,12 +33,12 @@ static const int s_MainMenuOptionCount = sizeof(s_MenuItems) / sizeof(s_MenuItem
 #define ARROW_CHARACTER 0x7E
 
 
-Mega2560Program::Mega2560Program()
+Esp32Program::Esp32Program()
     : m_State(State::Menu), m_WritingMachine(m_CoreXY, m_PenHolder)
 {
 }
 
-void Mega2560Program::Initialize()
+void Esp32Program::Initialize()
 {
     IO::Initialize();
     m_CoreXY.Initialize();
@@ -58,7 +58,7 @@ void Mega2560Program::Initialize()
 
 }
 
-void Mega2560Program::OnUpdate()
+void Esp32Program::OnUpdate()
 {
     float dt = m_Timer.Tick();
 
@@ -88,14 +88,14 @@ void Mega2560Program::OnUpdate()
     }
 }
 
-void Mega2560Program::OnMainMenuEnter()
+void Esp32Program::OnMainMenuEnter()
 {
     m_MainMenuData.SelectedIndex = 0;
     m_MainMenuData.ViewWindowBegin = 0;
     m_MainMenuData.RequireRefreshScreen = true;
 }
 
-void Mega2560Program::OnMainMenuUpdate()
+void Esp32Program::OnMainMenuUpdate()
 {
     IO::PullData();
     
@@ -270,7 +270,7 @@ void Mega2560Program::OnMainMenuUpdate()
     m_MainMenuData.RequireRefreshScreen = false;
 }
 
-void Mega2560Program::OnManualCalibrationEnter()
+void Esp32Program::OnManualCalibrationEnter()
 {
     IO::ClearDisplay();
     IO::DisplayMessage(0, "-Calibration Mode");
@@ -279,7 +279,7 @@ void Mega2560Program::OnManualCalibrationEnter()
     IO::DisplayMessage(3, "-Cancel to exit");
 }
 
-void Mega2560Program::OnManualCalibrationUpdate(float dt)
+void Esp32Program::OnManualCalibrationUpdate(float dt)
 {
     IO::PullData();
 
@@ -334,7 +334,7 @@ void Mega2560Program::OnManualCalibrationUpdate(float dt)
     m_CoreXY.Move(delta, 1000000.0f * CALIBRATION_SEGMENT_TIME);
 }
 
-void Mega2560Program::OnManualWritingEnter()
+void Esp32Program::OnManualWritingEnter()
 {
     IO::ClearDisplay();
     IO::DisplayMessage(0, "-Manual Writing Mode");
@@ -342,7 +342,7 @@ void Mega2560Program::OnManualWritingEnter()
     IO::DisplayMessage(2, "-Cancel to exit");
 }
 
-void Mega2560Program::OnManualWritingUpdate(float dt)
+void Esp32Program::OnManualWritingUpdate(float dt)
 {
     IO::PullData();
 
@@ -402,7 +402,7 @@ void Mega2560Program::OnManualWritingUpdate(float dt)
     m_CoreXY.WaitFinish();
 }
 
-void Mega2560Program::OnWritingEnter()
+void Esp32Program::OnWritingEnter()
 {
     IO::ClearDisplay();
     IO::DisplayMessage(0, "-Writing Mode");
@@ -410,7 +410,7 @@ void Mega2560Program::OnWritingEnter()
     m_WritingMachine.Enable(true);
 }
 
-void Mega2560Program::OnWritingUpdate(float dt)
+void Esp32Program::OnWritingUpdate(float dt)
 {
     IO::PullData();
 

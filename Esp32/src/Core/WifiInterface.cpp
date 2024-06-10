@@ -48,6 +48,8 @@ void WifiInterface::Connect(const char* ssid, const char* password)
     {
         yield();
     }
+
+    Serial.println("Connected");
 }
 
 void WifiInterface::Disconnect()
@@ -99,6 +101,12 @@ void WifiInterface::SendBytesToClient(const uint8_t* data, int size)
 
 bool WifiInterface::IncomingFromClient()
 {
+    if (s_Data.Client.available())
+    {
+        Serial.print("Peek: ");
+        Serial.println(s_Data.Client.peek());
+    }
+
     return s_Data.Client.available() && s_Data.Client.peek() == TRANSMISION_BEGIN_BYTE;
 }
 
@@ -110,12 +118,15 @@ uint8_t* WifiInterface::ReadBytesFromClient(uint8_t* buffer, int size)
             break;
     }
 
+    Serial.println("Begin read");
+
     Acknowledge();
 
     // Read the main content
     while (true)
     {
         uint8_t segmentLength = ReadNextByte();
+        Serial.println(segmentLength);
 
         if (segmentLength == TRANSMISION_END_BYTE)
         {

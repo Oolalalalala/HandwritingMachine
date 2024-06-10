@@ -1,14 +1,14 @@
-#ifndef MEGA2560_PROGRAM_H
-#define MEGA2560_PROGRAM_H
+#ifndef ESP32_PROGRAM_H
+#define ESP32_PROGRAM_H
 
 #include "../Utils/Timer.h"
 #include "WritingMachine.h"
 
-class Mega2560Program
+class Esp32Program
 {
 public:
-    Mega2560Program();
-    ~Mega2560Program() = default;
+    Esp32Program();
+    ~Esp32Program() = default;
 
     void Initialize();
     void OnUpdate();
