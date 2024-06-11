@@ -8,7 +8,7 @@
 
 #define PEN_SPEED 20 // (mm/s)
 #define SEGMENT_TIME 0.1f // (s)
-#define JOYSTICK_DEADZONE 100
+#define JOYSTICK_DEADZONE 512
 
 
 
@@ -29,7 +29,7 @@ void ManualCalibrationState::OnUpdate(float dt)
 
     if (IO::IsButtonDown(Button::Enter))
     {
-        coreXY.SetCurrentPositionOrigin();
+        coreXY.SetAbsolutePosition({0.0f, 0.0f});
         ESP32Program::Get().SwitchState(State::Menu);
         return;
     }
@@ -66,7 +66,7 @@ void ManualCalibrationState::OnUpdate(float dt)
     float ratio = max(abs(joystick.X), abs(joystick.Y)) / length; // Used to normalize (due to square to circle mapping)
 
     Vector2 delta = Vector2(joystick.X, joystick.Y) * ratio;
-    delta = delta / (512 - JOYSTICK_DEADZONE) * PEN_SPEED * SEGMENT_TIME;
+    delta = delta / (2048 - JOYSTICK_DEADZONE) * PEN_SPEED * SEGMENT_TIME;
 
     coreXY.Move(delta, 1000000.0f * SEGMENT_TIME);
     coreXY.WaitFinish();

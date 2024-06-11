@@ -13,9 +13,10 @@ public:
     static void Disconnect();
 
     static bool IsConnected();
-    static IPAddress GetIpAddress();
+    static IPAddress GetIPAddress();
 
     static void BeginServer();
+    static void TryClientConnection(); // Non-blocking
     static void WaitForClientConnection();
     static bool HasClient();
 

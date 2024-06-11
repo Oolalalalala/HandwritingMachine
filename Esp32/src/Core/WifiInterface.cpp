@@ -27,9 +27,9 @@ void WifiInterface::TryConnect(const char* ssid, const char* password)
 
 void WifiInterface::Connect(const char* ssid, const char* password)
 {
+    /*
     int n = WiFi.scanNetworks();
 
-    /*
     Serial.println("scan done");
     if (n == 0) {
           Serial.println("no networks found");
@@ -61,6 +61,12 @@ void WifiInterface::Connect(const char* ssid, const char* password)
 
 void WifiInterface::Disconnect()
 {
+    s_Data.Server.end();
+    s_Data.Client.stop();
+
+    s_Data.Server = WiFiServer(PORT, 1);
+    s_Data.Client = WiFiClient();
+
     WiFi.disconnect();
 }
 
@@ -69,7 +75,7 @@ bool WifiInterface::IsConnected()
     return WiFi.status() == WL_CONNECTED;
 }
 
-IPAddress WifiInterface::GetIpAddress()
+IPAddress WifiInterface::GetIPAddress()
 {
     return WiFi.localIP();
 }
@@ -77,6 +83,16 @@ IPAddress WifiInterface::GetIpAddress()
 void WifiInterface::BeginServer()
 {
     s_Data.Server.begin();
+}
+
+void WifiInterface::TryClientConnection()
+{
+    s_Data.Client = s_Data.Server.accept();
+}
+
+bool WifiInterface::HasClient()
+{
+    return s_Data.Client;
 }
 
 void WifiInterface::WaitForClientConnection()

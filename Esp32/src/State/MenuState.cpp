@@ -11,7 +11,7 @@ static char s_MenuItems[][21] = { " Modes",                        // 0
                                           " Manual Writing",       // 3
                                           " Tic Tac Toe",          // 4
                                       " Internet Modes",           // 5
-                                          " I don't know",         // 6
+                                          " Take Photo",           // 6
                                           " ???",                  // 7 
                                   " Calibration",                  // 8
                                       " Set Draw Region(A4)",      // 9
@@ -26,7 +26,7 @@ static const int s_NextItemIndex[] = { 8, 2, 5, 4, 2, 0, 7, 5, 12, 10, 11, 8, 0,
 static const int s_LastItemIndex[] = { -1, -1, 1, -1, 3, 2, -1, 6, 0, -1, 9, 10, 8, -1, 13 }; // Set last item to -1 for the first items
 static const int s_MainMenuOptionCount = sizeof(s_MenuItems) / sizeof(s_MenuItems[0]);
 #define ARROW_CHARACTER 0x7E
-#define MINIMUM_INPUT_INTERVAL 100 // (ms)
+#define MINIMUM_INPUT_INTERVAL 250 // (ms)
 
 
 struct MenuStateData
@@ -74,6 +74,12 @@ void MenuState::OnUpdate(float dt)
         if (s_Data.SelectedIndex == 4)
         {
             ESP32Program::Get().SwitchState(State::TicTacToe);
+            return;
+        }
+
+        if (s_Data.SelectedIndex == 6)
+        {
+            ESP32Program::Get().SwitchState(State::Photo);
             return;
         }
 
@@ -134,9 +140,12 @@ void MenuState::OnUpdate(float dt)
 
         parentIndex = s_NextItemIndex[parentIndex];
         s_Data.SelectedIndex = parentIndex;
+
         s_Data.ViewWindowBegin = parentIndex;
-        
         while (s_LastItemIndex[s_Data.ViewWindowBegin] != -1)
+            s_Data.ViewWindowBegin = s_LastItemIndex[s_Data.ViewWindowBegin];
+
+        while (true)
         {
             int viewWindowEnd = s_Data.ViewWindowBegin;
             for (int i = 0; i < 3; i++)
@@ -147,12 +156,12 @@ void MenuState::OnUpdate(float dt)
                 viewWindowEnd = s_NextItemIndex[viewWindowEnd];
             }
 
-            if (viewWindowEnd > s_Data.SelectedIndex)
-            {
-                s_Data.ViewWindowBegin = s_LastItemIndex[s_Data.ViewWindowBegin];
-            }
+            if (viewWindowEnd < s_Data.SelectedIndex)
+                s_Data.ViewWindowBegin = s_NextItemIndex[s_Data.ViewWindowBegin];
+            else
+                break;
         }
-
+        
         s_Data.RequireRefreshScreen = true;
     }
     

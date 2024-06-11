@@ -14,8 +14,8 @@ static camera_config_t camera_config = {
     .pin_pwdn       = -1,  // 斷電腳
     .pin_reset      = -1,  // 重置腳
     .pin_xclk       = 17,   // 外部時脈腳
-    .pin_sscb_sda   = 21,  // I2C資料腳
-    .pin_sscb_scl   = 22,  // I2C時脈腳
+    .pin_sscb_sda   = 3, //21,  // I2C資料腳
+    .pin_sscb_scl   = 1, //22,  // I2C時脈腳
     .pin_d7         = 13,  // 資料腳
     .pin_d6         = 12,
     .pin_d5         = 14,
@@ -64,20 +64,11 @@ bool Camera::Capture()
     if (s_Framebuffer)
         esp_camera_fb_return(s_Framebuffer);
 
-    s_Framebuffer = nullptr;
     s_Framebuffer = esp_camera_fb_get();
 
-    if (!s_Framebuffer) 
-    {
-        Serial.println("Failed to capture image");
-        return false;
-    }
-    else
-    {
-        Serial.println("Image captured");
-        return true;
-    }
+    delay(100); // Don't even know why delay is needed, but it seems to work
 
+    return s_Framebuffer != nullptr;
 }
 
 camera_fb_t* Camera::GetFramebuffer()

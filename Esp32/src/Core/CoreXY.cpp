@@ -16,6 +16,9 @@
 #define CONSECUTIVE_NEXT_ACTION_INTERVALS 0 // (us), if next action interval is less than this, we keep updating the steppers
 
 #define CAP_RPM 240.0f // The max speed of the stepper motor, when too low, may cause the motors to desync
+#define BOUNDDARY_X 20.0f
+#define BOUNDDARY_Y 15.0f
+
 
 struct CoreXYData
 {
@@ -52,27 +55,35 @@ void CoreXY::OnUpdate()
 
 void CoreXY::Move(Vector2 delta, long duration)
 {
-    Vector2Int coords = CalculateStepperCoordinate(m_Position + delta);
+    Vector2 pos = m_Position + delta;
+    if (m_BoundaryCheck)
+        pos = ClampToBoundary(pos);
+
+    Vector2Int coords = CalculateStepperCoordinate(pos);
     Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
     //s_Data.StepperMotorA.setRPM((float)deltaSteps.X / STEPPER_STEPS_PER_REVOLUTION / duration * 1000000.0f * 60.0f);
     //s_Data.StepperMotorB.setRPM((float)deltaSteps.Y / STEPPER_STEPS_PER_REVOLUTION / duration * 1000000.0f * 60.0f);
     s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
     
-    m_Position = m_Position + delta;
+    m_Position = pos;
     m_StepperCoordinate = coords;
 
     // Debug
-    //Serial.print(deltaSteps.X);
-    //Serial.print(" ");
-    //Serial.print(deltaSteps.Y);
-    //Serial.print(" ");
-    //Serial.println(duration);
+    Serial.print(deltaSteps.X);
+    Serial.print(" ");
+    Serial.print(deltaSteps.Y);
+    Serial.print(" ");
+    Serial.println(duration);
 }
 
 void CoreXY::MoveTo(Vector2 position, long duration)
 {
-    Vector2Int coords = CalculateStepperCoordinate(m_Origin + position);
+    Vector2 pos = m_Origin + position;
+    if (m_BoundaryCheck)
+        pos = ClampToBoundary(pos);
+
+    Vector2Int coords = CalculateStepperCoordinate(pos);
     Vector2Int deltaSteps = coords - m_StepperCoordinate;
 
     // Debug
@@ -84,7 +95,7 @@ void CoreXY::MoveTo(Vector2 position, long duration)
 
     s_Data.Controller.startMoveTimed(deltaSteps.X, deltaSteps.Y, duration);
 
-    m_Position = m_Origin + position;
+    m_Position = pos;
     m_StepperCoordinate = coords;
 }
 
@@ -94,6 +105,21 @@ Vector2Int CoreXY::CalculateStepperCoordinate(Vector2 position)
     float b = position.X + position.Y;
 
     return { roundf(a / DISPLACEMENT_PER_STEP), roundf(b / DISPLACEMENT_PER_STEP) };
+}
+
+Vector2 CoreXY::ClampToBoundary(Vector2 position)
+{
+    if (position.X < 0.0f)
+        position.X = 0.0f;
+    else if (position.X > BOUNDDARY_X)
+        position.X = BOUNDDARY_X;
+
+    if (position.Y < 0.0f)
+        position.Y = 0.0f;
+    else if (position.Y > BOUNDDARY_Y)
+        position.Y = BOUNDDARY_Y;
+
+    return position;
 }
 
 void CoreXY::WaitFinish()
@@ -127,7 +153,7 @@ void CoreXY::SetCurrentPositionOrigin()
     m_Origin = m_Position;
 }
 
-void SetMaxSpeed(float speed)
+void CoreXY::SetMaxSpeed(float speed)
 {
     // Not tested
     float maxRPM = speed * sqrt(2) / (2 * PI * STEPPER_WHEEL_RADIUS) * 60;

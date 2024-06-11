@@ -4,12 +4,15 @@
 #include "../Utils/Math.h"
 #include <Arduino.h>
 
+#include "Camera.h"
+#include "WifiInterface.h"
 #include "../State/AutoCalibrationState.h"
 #include "../State/ConnectToWIFIState.h"
 #include "../State/ManualCalibrationState.h"
 #include "../State/ManualWritingState.h"
 #include "../State/MenuState.h"
 #include "../State/PCControlState.h"
+#include "../State/PhotoState.h"
 #include "../State/SetDrawRegionState.h"
 #include "../State/ShowServerIPState.h"
 #include "../State/TicTacToeState.h"
@@ -27,6 +30,11 @@ void ESP32Program::Initialize()
     m_CoreXY.Initialize();
     m_PenHolder.Initialize();
     m_WritingMachine.Initialize();
+
+    Camera::Initialize();
+    delay(2000); // Wait for camera to initialize
+
+    WifiInterface::Initialize();
 
     s_Instance = this;
 
@@ -69,6 +77,11 @@ void ESP32Program::OnUpdate()
         case State::TicTacToe:
         {
             TicTacToeState::OnUpdate(dt);
+            break;
+        }
+        case State::Photo:
+        {
+            PhotoState::OnUpdate(dt);
             break;
         }
         case State::ConnectToWifi:
@@ -123,6 +136,11 @@ void ESP32Program::OnUpdate()
                 TicTacToeState::OnExit();
                 break;
             }
+            case State::Photo:
+            {
+                PhotoState::OnExit();
+                break;
+            }
             case State::ConnectToWifi:
             {
                 ConnectToWifiState::OnExit();
@@ -170,6 +188,11 @@ void ESP32Program::OnUpdate()
             case State::TicTacToe:
             {
                 TicTacToeState::OnEnter();
+                break;
+            }
+            case State::Photo:
+            {
+                PhotoState::OnEnter();
                 break;
             }
             case State::ConnectToWifi:

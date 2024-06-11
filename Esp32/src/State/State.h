@@ -9,6 +9,7 @@ enum class State
     PCControl,
     ManualWriting,
     TicTacToe,
+    Photo,
     AutoCalibration,
     ManualCalibration,
     SetDrawRegion, 
