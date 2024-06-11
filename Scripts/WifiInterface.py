@@ -30,7 +30,11 @@ class WifiInterface:
 
         print(f"Receiving {length} bytes")
 
-        return self.client.recv(length)
+        data = b''
+        while len(data) < length:
+            data += self.client.recv(length - len(data))
+
+        return data
 
     def send_bytes(self, data : bytes):
 
@@ -68,23 +72,15 @@ if __name__ == '__main__':
     else:
         print("Failed to connect to server")
 
-    wifi.send_bytes(b'Hello World')
+    #wifi.send_bytes(b'Hello World')
 
-    message = wifi.read_bytes()
+    while (True):
+        message = wifi.read_bytes()
 
-    if len(message) != 176 * 144 * 2:
-        print("Invalid image data")
-        exit()
+        if len(message) != 320 * 240:
+            print("Invalid image data")
+            print(len(message))
+            exit()
 
-    rgb = []
-
-    # RGB565
-    for i in range(0, len(message) // 2):
-        r = message[i * 2] >> 3
-        g = ((message[i * 2] & 0b00000111) << 3) | (message[i * 2 + 1] >> 5)
-        b = message[i * 2 + 1] & 0b00011111
-        rgb.extend([r, g, b])
-
-    # QCIF
-    img = Image.frombytes('RGB', (176, 144), bytes(rgb))
-    img.show()
+        img = Image.frombytes('L', (320, 240), bytes(message))
+        img.show()

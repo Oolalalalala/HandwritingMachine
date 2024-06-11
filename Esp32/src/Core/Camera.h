@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <stdint.h>
+#include <esp_camera.h>
 
 class Camera
 {
@@ -9,9 +10,9 @@ public:
     static void Initialize();
     static void Shutdown();
 
-    static void Capture();
-    static uint8_t* GetFramebuffer();
-    static uint32_t GetFramebufferSize();
+    static bool Capture();
+    static camera_fb_t* GetFramebuffer();
+    static void ReleaseFramebuffer();
 };
 
 #endif
