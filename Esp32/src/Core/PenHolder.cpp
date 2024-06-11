@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-#define SERVO_PIN 3
+#define SERVO_PIN 23
 #define PEN_LIFT_ANGLE 0
 #define PEN_DROP_ANGLE 60
 #define PEN_LIFT_TIME 200 // (ms)

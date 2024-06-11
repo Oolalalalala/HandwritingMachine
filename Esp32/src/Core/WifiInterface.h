@@ -8,6 +8,7 @@ class WifiInterface
 public:
     static void Initialize();
 
+    static void TryConnect(const char* ssid, const char* password); // Non-blocking
     static void Connect(const char* ssid, const char* password); // Blocking
     static void Disconnect();
 
@@ -18,9 +19,9 @@ public:
     static void WaitForClientConnection();
     static bool HasClient();
 
-    static void SendBytesToClient(const uint8_t* data, int size);
+    static void SendBytesToClient(const uint8_t* data, unsigned long size);
     static bool IncomingFromClient(); // Returns true if there is a message incoming
-    static uint8_t* ReadBytesFromClient(uint8_t* buffer, int size); // Returns the end
+    static uint8_t* ReadBytesFromClient(uint8_t* buffer, unsigned long size); // Returns the end
 
 private:
     static void Acknowledge();

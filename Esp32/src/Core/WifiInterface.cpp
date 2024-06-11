@@ -20,10 +20,17 @@ void WifiInterface::Initialize()
     WiFi.mode(WIFI_STA);
 }
 
+void WifiInterface::TryConnect(const char* ssid, const char* password)
+{
+    WiFi.begin(ssid, password);
+}
+
 void WifiInterface::Connect(const char* ssid, const char* password)
 {
     int n = WiFi.scanNetworks();
-     Serial.println("scan done");
+
+    /*
+    Serial.println("scan done");
     if (n == 0) {
           Serial.println("no networks found");
     } else {
@@ -41,7 +48,7 @@ void WifiInterface::Connect(const char* ssid, const char* password)
       delay(10);
     }
   }
-
+    */
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED)
@@ -49,7 +56,7 @@ void WifiInterface::Connect(const char* ssid, const char* password)
         yield();
     }
 
-    Serial.println("Connected");
+    Serial.println("Connected to WiFi");
 }
 
 void WifiInterface::Disconnect()
@@ -94,8 +101,16 @@ uint8_t WifiInterface::ReadNextByte()
     }
 }
 
-void WifiInterface::SendBytesToClient(const uint8_t* data, int size)
+void WifiInterface::SendBytesToClient(const uint8_t* data, unsigned long size)
 {
+    s_Data.Client.write(TRANSMISION_BEGIN_BYTE);
+    
+    // 4-byte size (big endian)
+    s_Data.Client.write((size >> 24) & 0xFF);
+    s_Data.Client.write((size >> 16) & 0xFF);
+    s_Data.Client.write((size >> 8) & 0xFF);
+    s_Data.Client.write(size & 0xFF);
+
     s_Data.Client.write(data, size);
 }
 
@@ -110,7 +125,7 @@ bool WifiInterface::IncomingFromClient()
     return s_Data.Client.available() && s_Data.Client.peek() == TRANSMISION_BEGIN_BYTE;
 }
 
-uint8_t* WifiInterface::ReadBytesFromClient(uint8_t* buffer, int size)
+uint8_t* WifiInterface::ReadBytesFromClient(uint8_t* buffer, unsigned long size)
 {
     while (true)
     {

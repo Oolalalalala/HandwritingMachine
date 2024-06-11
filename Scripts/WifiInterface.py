@@ -1,4 +1,5 @@
 import socket
+from PIL import Image
 
 # Constants
 acknowledge_byte = b'\x06'
@@ -18,8 +19,18 @@ class WifiInterface:
 
         return True
     
-    def read_bytes(self, size):
-        return self.client.recv(size)
+    def read_bytes(self):
+        while True:
+            if self.client.recv(1) == transmission_begin_byte:
+                break
+        
+        print("Transmission begin received")
+
+        length = int.from_bytes(self.client.recv(4), 'big')
+
+        print(f"Receiving {length} bytes")
+
+        return self.client.recv(length)
 
     def send_bytes(self, data : bytes):
 
@@ -52,6 +63,28 @@ class WifiInterface:
 
 if __name__ == '__main__':
     wifi = WifiInterface("192.168.225.42", 8000)
-    print(wifi.connect())
+    if wifi.connect():
+        print("Connected to server")
+    else:
+        print("Failed to connect to server")
 
     wifi.send_bytes(b'Hello World')
+
+    message = wifi.read_bytes()
+
+    if len(message) != 176 * 144 * 2:
+        print("Invalid image data")
+        exit()
+
+    rgb = []
+
+    # RGB565
+    for i in range(0, len(message) // 2):
+        r = message[i * 2] >> 3
+        g = ((message[i * 2] & 0b00000111) << 3) | (message[i * 2 + 1] >> 5)
+        b = message[i * 2 + 1] & 0b00011111
+        rgb.extend([r, g, b])
+
+    # QCIF
+    img = Image.frombytes('RGB', (176, 144), bytes(rgb))
+    img.show()

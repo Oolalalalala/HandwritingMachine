@@ -15,6 +15,7 @@ public:
 
     void SetAbsolutePosition(Vector2 position); // (mm) Used to calibrate the absolute position
     void SetCurrentPositionOrigin(); // Set the current position as the origin
+    void SetMaxSpeed(float speed); // (mm/s)
 
     void Move(Vector2 delta, long duration); // Delta in (mm)
     void MoveTo(Vector2 position, long duration); // Position in (mm)
