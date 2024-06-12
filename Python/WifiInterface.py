@@ -73,7 +73,7 @@ class WifiInterface:
                 return True
     
 
-if __name__ == '__main__':
+def main():
     wifi = WifiInterface("192.168.225.42", 8000)
     if wifi.connect():
         print("Connected to server")
@@ -91,3 +91,6 @@ if __name__ == '__main__':
 
         img = Image.frombytes('L', (320, 240), bytes(message))
         img.show()
+
+if __name__ == '__main__':
+    main()
