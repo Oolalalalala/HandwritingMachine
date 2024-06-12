@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-#define SERVO_PIN 3
+#define SERVO_PIN 23
 #define PEN_LIFT_ANGLE 0
 #define PEN_DROP_ANGLE 60
 #define PEN_LIFT_TIME 200 // (ms)
@@ -12,7 +12,7 @@ void PenHolder::Initialize()
 {
     m_Servo.write(PEN_LIFT_ANGLE); // Set angle before starting the servo
 
-    m_Servo.attach(SERVO_PIN);
+    m_Servo.attach(SERVO_PIN, 1000, 2000); 
 
     m_LiftTime = millis();
 }

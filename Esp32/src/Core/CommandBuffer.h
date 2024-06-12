@@ -33,6 +33,9 @@ public:
     // [Parametrized Arc Function]: p = center + radius * <cos(t), sin(t)>, startAngle <= t <= endAngle
     void DrawArc(Vector2 center, float radius, float startAngle, float endAngle);
 
+    // Push a command directly
+    void PushCommand(MachineCommand& command) { m_Buffer.Push(command); }
+
     // Accessors
     static size_t Capacity() { return s_Capacity; }
     size_t Size() const { return m_Buffer.Size(); }
