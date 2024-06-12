@@ -7,6 +7,10 @@
 #include "../Core/Camera.h"
 #include "../Core/WifiInterface.h"
 
+
+#define IMAGE_HEADER_BYTE 'h'
+#define IMAGE_DATA_BYTE 'i'
+
 #define PEN_SPEED 20 // (mm/s)
 #define SEGMENT_TIME 0.1f // (s)
 #define JOYSTICK_DEADZONE 100
@@ -71,12 +75,14 @@ void PhotoState::OnUpdate(float dt)
         }
 
         // Send photo
-        uint8_t header[3];
+        uint8_t header[5];
         header[0] = 'p';
-        header[1] = fb->width;
-        header[2] = fb->height;
+        header[1] = fb->width & 0xFF;
+        header[2] = fb->width >> 8;
+        header[3] = fb->height & 0xFF;
+        header[4] = fb->height >> 8;
 
-        WifiInterface::SendBytesToClient(header, 3);
+        WifiInterface::SendBytesToClient(header, 5);
         WifiInterface::SendBytesToClient((uint8_t*)fb->buf, fb->len);
 
         Camera::ReleaseFramebuffer();

@@ -72,6 +72,7 @@ void WritingMachine::OnUpdate(float dt)
 void WritingMachine::NextStroke()
 {
     Serial.println("Stroke");
+    m_Writing = true;
 
     Vector2 targetPosition;
     float duration = m_StrokeSegmentTime;

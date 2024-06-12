@@ -17,7 +17,6 @@ class WifiInterface:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((self.server_ip, self.server_port))
 
-        return True
     
     def read_bytes(self):
         while True:

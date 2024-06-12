@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "../Utils/Math.h"
 
-enum class MachineCommandType : uint8_t
+enum class MachineCommandType : uint32_t
 {
     None = 0, SetConfig, Move, DrawDot, DrawLine, DrawQuadraticCurve, DrawArc
 };

@@ -6,12 +6,18 @@
 #include "../Core/IO.h"
 #include "../Core/WifiInterface.h"
 
+#define ASK_FOR_COMMAND_BYTE 'a' // Ask for commands when paused, pc will no respond if no commands
+#define END_BYTE 'e'
+
+#define RETRY_INTERVAL 1.0f // (s) The time before requesting commands again
+
 struct PCControlData
 {
     uint8_t* ReadBuffer;
     unsigned long ReadBufferSize;
     bool HasClient;
     bool Paused;
+    float PauseTimer;
 };
 
 static PCControlData s_Data;
@@ -23,11 +29,13 @@ void PCControlState::OnEnter()
     s_Data.HasClient = WifiInterface::HasClient();   
     if (s_Data.HasClient)
     {
-        IO::DisplayMessage(0, "PC Control");
+        IO::DisplayMessage(0, "PC Controling");
         IO::DisplayMessage(1, "Press Cancel to exit");
 
         s_Data.ReadBufferSize = CommandBuffer::Capacity() * sizeof(MachineCommand) + 1;
         s_Data.ReadBuffer = (uint8_t*)malloc(s_Data.ReadBufferSize);
+        s_Data.Paused = true;
+        s_Data.PauseTimer = 0.0f;
     }
     else
     {
@@ -44,9 +52,14 @@ void PCControlState::OnUpdate(float dt)
     {
         ESP32Program::Get().SwitchState(State::Menu);
 
-        // Notify client
+        // Notify client of end
         if (s_Data.HasClient)
-            WifiInterface::SendBytesToClient((uint8_t*)"e", 1);
+        {
+            uint8_t endMessage[1];
+            endMessage[0] = END_BYTE;
+
+            WifiInterface::SendBytesToClient(endMessage, 1);
+        }
 
         return;
     }
@@ -54,62 +67,44 @@ void PCControlState::OnUpdate(float dt)
     if (!s_Data.HasClient)
         return;
 
+
+    if (WifiInterface::IncomingFromClient())
+    {
+        s_Data.Paused = false;
+        s_Data.PauseTimer = 0.0f;
+
+        ReadAndParseCommands();
+    }
+
     if (s_Data.Paused)
     {
-        if (!WifiInterface::IncomingFromClient())
-            return;
+        s_Data.PauseTimer += dt;
 
-        // Client asked to start/resume
-        WifiInterface::ReadBytesFromClient(s_Data.ReadBuffer, s_Data.ReadBufferSize);
-        if (s_Data.ReadBuffer[0] == 'p')
-            s_Data.Paused = false;
+        // Ask for commands
+        if (s_Data.PuaseTimer > RETRY_INTERVAL)
+        {
+            s_Data.PauseTimer = 0.0f;
+
+            // Ask for commands
+            uint8_t request[2];
+            request[0] = ASK_FOR_COMMAND_BYTE;
+            request[1] = (uint8_t)CommandBuffer::Capacity();
+
+            WifiInterface::SendBytesToClient(request, 2);
+        }
+
+        return;
     }
 
     auto& writingMachine = ESP32Program::Get().GetWritingMachine();
-    auto& commandBuffer = writingMachine.GetCommandBuffer();
-
-    // Send request for more commands
-    if (commandBuffer.Empty())
-    {
-        uint8_t request[2];
-        request[0] = 'r';
-        request[1] = (uint8_t)CommandBuffer::Capacity();
-
-        WifiInterface::SendBytesToClient(request, 2);
-    }
-
-    // Parse the respond
-    uint8_t* end = WifiInterface::ReadBytesFromClient(s_Data.ReadBuffer, s_Data.ReadBufferSize);
-    int commandCount = s_Data.ReadBuffer[0];
-    
-    // 0 to pause, 00 to end state
-    if (commandCount == 0)
-    {
-        if (end == s_Data.ReadBuffer + 1)
-            s_Data.Paused = true;
-        else
-            ESP32Program::Get().SwitchState(State::Menu);
-        return;
-    }
-
-    // Error check
-    if (end - s_Data.ReadBuffer != 1 + commandCount * sizeof(MachineCommand))
-    {
-        WifiInterface::SendBytesToClient((uint8_t*)"e", 1);
-        ESP32Program::Get().SwitchState(State::Menu);
-        return;
-    }
-
-
-    MachineCommand command;
-    for (int i = 0; i < commandCount; i++)
-    {
-        memcpy(&command, s_Data.ReadBuffer + 1 + i * sizeof(MachineCommand), sizeof(MachineCommand));
-        commandBuffer.PushCommand(command);
-    }
-
-
     writingMachine.OnUpdate(dt);
+
+    auto& commandBuffer = writingMachine.GetCommandBuffer();
+    if (!writingMachine.IsWriting() && commandBuffer.Empty())
+    {
+        s_Data.Paused = true;
+        s_Data.PauseTimer = 0.0f;
+    }
 }
 
 void PCControlState::OnExit()
@@ -118,4 +113,30 @@ void PCControlState::OnExit()
     writingMachine.GetCommandBuffer().Clear();
 
     free(s_Data.ReadBuffer);
+}
+
+void PCControlState::ReadAndParseCommands()
+{
+    uint8_t* end = WifiInterface::ReadBytesFromClient(s_Data.ReadBuffer, s_Data.ReadBufferSize);
+    int commandCount = s_Data.ReadBuffer[0];
+
+    // Error check
+    if (end - s_Data.ReadBuffer != 1 + commandCount * sizeof(MachineCommand))
+    {
+        uint8_t endMessage[1];
+        endMessage[0] = END_BYTE;
+        WifiInterface::SendBytesToClient(endMessage, 1);
+
+        ESP32Program::Get().SwitchState(State::Menu);
+        return;
+    }
+
+    auto& commandBuffer = ESP32Program::Get().GetWritingMachine().GetCommandBuffer();
+
+    MachineCommand command;
+    for (int i = 0; i < commandCount; i++)
+    {
+        memcpy(&command, s_Data.ReadBuffer + 1 + i * sizeof(MachineCommand), sizeof(MachineCommand));
+        commandBuffer.PushCommand(command);
+    }
 }
