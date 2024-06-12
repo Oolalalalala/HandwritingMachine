@@ -2,20 +2,22 @@
 
 //#include "../Vendor/OV7670-ESP32/OV7670-ESP32/OV7670.h"
 #include <Arduino.h>
+#include <driver/i2c.h>
 
+/// wrong values below
 #define RESOLUTION QCIF
 #define WIDTH 176
 #define HEIGHT 144
 #define COLOR_MODE RGB565
-#define PIXEL_SIZE 2 // How many bytes per pixel
+#define PIXEL_SIZE 1 // How many bytes per pixel
 
 
 static camera_config_t camera_config = {
     .pin_pwdn       = -1,  // 斷電腳
     .pin_reset      = -1,  // 重置腳
     .pin_xclk       = 17,   // 外部時脈腳
-    .pin_sscb_sda   = 3, //21,  // I2C資料腳
-    .pin_sscb_scl   = 1, //22,  // I2C時脈腳
+    .pin_sscb_sda   = -1, //21,  // I2C資料腳
+    .pin_sscb_scl   = -1, //22,  // I2C時脈腳
     .pin_d7         = 13,  // 資料腳
     .pin_d6         = 12,
     .pin_d5         = 14,
@@ -34,7 +36,9 @@ static camera_config_t camera_config = {
     .frame_size     = FRAMESIZE_QVGA, // 設定影像大小：VGA
     .jpeg_quality   = 12,  // 設定JPEG影像畫質，有效值介於0-63，數字越低畫質越高。
     .fb_count       = 1,    // 影像緩衝記憶區數量
-    .fb_location    = CAMERA_FB_IN_DRAM
+    .fb_location    = CAMERA_FB_IN_DRAM,
+    .grab_mode      = CAMERA_GRAB_WHEN_EMPTY,
+    .sccb_i2c_port  = I2C_NUM_0 // I2C埠 ///////////////// Use initialized I2C port
       };
 
 static camera_fb_t* s_Framebuffer = nullptr;

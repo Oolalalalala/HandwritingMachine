@@ -1,10 +1,11 @@
 #include "IO.h"
 
 #include <Wire.h>
-#include <hd44780.h>
-#include <hd44780ioClass/hd44780_I2Cexp.h>
+//#include <hd44780.h>
+//#include <hd44780ioClass/hd44780_I2Cexp.h>
 
 #include <Arduino.h>
+#include "../Vendor/HD44780.h"
 
 
 
@@ -16,7 +17,7 @@
 
 struct IOData
 {
-    hd44780_I2Cexp LCD;
+    //hd44780_I2Cexp LCD;
     char WriteBuffer[21];
 
     bool LastFrameButtonStates[7];
@@ -35,8 +36,10 @@ void IO::Initialize()
     pinMode(ENTER_BUTTON_PIN, INPUT);
     pinMode(CANCEL_BUTTON_PIN, INPUT);
 
-    s_Data.LCD.begin(20, 4);
-    s_Data.LCD.clear();
+    LCD_init(0x27, 21, 22, 20, 4);
+    LCD_clearScreen();
+    //s_Data.LCD.begin(20, 4);
+    //s_Data.LCD.clear();
 
     for (int i = 0; i < 7; i++)
     {
@@ -125,7 +128,8 @@ Vector2Int IO::GetJoystickDirection()
 
 void IO::ClearDisplay()
 {
-    s_Data.LCD.clear();
+    //s_Data.LCD.clear();
+    LCD_clearScreen();
 }
 
 void IO::DisplayMessage(int line, const char* message)
@@ -134,6 +138,9 @@ void IO::DisplayMessage(int line, const char* message)
     memset(s_Data.WriteBuffer, ' ', 20);
     memcpy(s_Data.WriteBuffer, message, min(20, (int)strlen(message))); 
 
-    s_Data.LCD.setCursor(0, line);
-    s_Data.LCD.print(s_Data.WriteBuffer);
+    //s_Data.LCD.setCursor(0, line);
+    //s_Data.LCD.print(s_Data.WriteBuffer);
+
+    LCD_setCursor(0, line);
+    LCD_writeStr(s_Data.WriteBuffer);
 }

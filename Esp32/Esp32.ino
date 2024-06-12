@@ -1,6 +1,4 @@
 #include "src/Core/Esp32Program.h"
-#include "src/Core/WifiInterface.h"
-#include "src/Core/Camera.h"
 
 
 ESP32Program program;

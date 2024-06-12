@@ -14,7 +14,7 @@
 #include "../State/PCControlState.h"
 #include "../State/PhotoState.h"
 #include "../State/SetDrawRegionState.h"
-#include "../State/AllowConnectionState.h"
+#include "../State/AcceptConnectionState.h"
 #include "../State/TicTacToeState.h"
 
 ESP32Program* ESP32Program::s_Instance = nullptr;
@@ -32,7 +32,7 @@ void ESP32Program::Initialize()
     m_WritingMachine.Initialize();
 
     Camera::Initialize();
-    delay(2000); // Wait for camera to initialize
+    delay(1000); // Wait for camera to initialize
 
     WifiInterface::Initialize();
 
@@ -102,9 +102,9 @@ void ESP32Program::OnUpdate()
             SetDrawRegionState::OnUpdate(dt);
             break;
         }
-        case State::ShowServerIP:
+        case State::AcceptConnection:
         {
-            AllowConnectionState::OnUpdate(dt);
+            AcceptConnectionState::OnUpdate(dt);
             break;
         }
     }
@@ -159,9 +159,9 @@ void ESP32Program::OnUpdate()
                 SetDrawRegionState::OnExit();
                 break;
             }
-            case State::ShowServerIP:
+            case State::AcceptConnection:
             {
-                AllowConnectionState::OnExit();
+                AcceptConnectionState::OnExit();
                 break;
             }
         }
@@ -213,9 +213,9 @@ void ESP32Program::OnUpdate()
                 SetDrawRegionState::OnEnter();
                 break;
             }
-            case State::ShowServerIP:
+            case State::AcceptConnection:
             {
-                AllowConnectionState::OnEnter();
+                AcceptConnectionState::OnEnter();
                 break;
             }
         }

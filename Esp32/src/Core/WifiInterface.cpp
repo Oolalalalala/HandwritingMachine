@@ -7,10 +7,15 @@
 #define TRANSMISION_BEGIN_BYTE 0x01
 #define TRANSMISION_END_BYTE 0 // Length of 0 means end of transmission
 
+#define CONNECTION_TIMEOUT 10000 // (ms)
+#define MAINTAIN_CONNECTION_INTERVAL 1000 // (ms)
+
 struct WifiInterfaceData
 {
     WiFiServer Server = WiFiServer(PORT, 1); // 1 client only
     WiFiClient Client = WiFiClient();
+    long LastSentByteTime = 0; // (ms)
+    bool HasPreviousConnection = false;
 };
 
 static WifiInterfaceData s_Data;
@@ -61,8 +66,8 @@ void WifiInterface::Connect(const char* ssid, const char* password)
 
 void WifiInterface::Disconnect()
 {
-    s_Data.Server.end();
     s_Data.Client.stop();
+    s_Data.Server.end();
 
     s_Data.Server = WiFiServer(PORT, 1);
     s_Data.Client = WiFiClient();
@@ -90,14 +95,19 @@ bool WifiInterface::ServerEnabled()
     return (bool)s_Data.Server;
 }
 
-void WifiInterface::TryClientConnection()
+bool WifiInterface::TryClientConnection()
 {
     s_Data.Client = s_Data.Server.accept();
+
+    if (s_Data.Client)
+        s_Data.HasPreviousConnection = true;
+
+    return s_Data.Client;
 }
 
-bool WifiInterface::HasClient()
+bool WifiInterface::HasPreviousConnection()
 {
-    return s_Data.Client;
+    return s_Data.HasPreviousConnection;
 }
 
 void WifiInterface::WaitForClientConnection()
@@ -106,6 +116,17 @@ void WifiInterface::WaitForClientConnection()
     {
         s_Data.Client = s_Data.Server.accept();
     }
+
+    s_Data.HasPreviousConnection = true;
+}
+
+void WifiInterface::DumpClient()
+{
+    if (s_Data.Client)
+    {
+        s_Data.Client.stop();
+    }
+    s_Data.Client = WiFiClient();
 }
 
 void WifiInterface::Acknowledge()
@@ -133,17 +154,21 @@ void WifiInterface::SendBytesToClient(const uint8_t* data, unsigned long size)
     s_Data.Client.write(size & 0xFF);
 
     s_Data.Client.write(data, size);
+
+    s_Data.LastSentByteTime = millis();
 }
 
 bool WifiInterface::IncomingFromClient()
 {
-    if (s_Data.Client.available())
+    while (s_Data.Client.available())
     {
-        Serial.print("Peek: ");
-        Serial.println(s_Data.Client.peek());
+        if (s_Data.Client.peek() == TRANSMISION_BEGIN_BYTE)
+            return true;
+
+        s_Data.Client.read();
     }
 
-    return s_Data.Client.available() && s_Data.Client.peek() == TRANSMISION_BEGIN_BYTE;
+    return false;
 }
 
 uint8_t* WifiInterface::ReadBytesFromClient(uint8_t* buffer, unsigned long size)

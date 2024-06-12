@@ -3,91 +3,31 @@ import queue
 import threading
 import struct
 from PIL import Image
-
-class CommandBuffer:
-    def __init__(self):
-        self.commands = []
-    
-    def set_config(self, stroke_segment_length, stroke_speed, hover_speed):
-        self.commands.append(["set_config", stroke_segment_length, stroke_speed, hover_speed])
-
-    def move(self, start_x, start_y, end_x, end_y):
-        self.commands.append(["move", start_x, start_y, end_x, end_y])
-
-    def draw_dot(self, x, y):
-        self.commands.append(["draw_dot", x, y])
-
-    def draw_line(self, start_x, start_y, end_x, end_y):
-        self.commands.append(["draw_line", start_x, start_y, end_x, end_y])
-
-    def draw_quadratic_curve(self, x_a, x_b, x_c, y_a, y_b, y_c):
-        self.commands.append(["draw_quadratic_curve", x_a, x_b, x_c, y_a, y_b, y_c])
-
-    def draw_quadratic_bezier(self, start_x, start_y, control_x, control_y, end_x, end_y):
-        # Convert to quadratic curve
-        x_a = start_x - 2.0 * control_x + end_x;
-        x_b = 2.0 * (control_x - start_x);
-        x_c = start_x;
-
-        y_a = start_y - 2.0 * control_y + end_y;
-        y_b = 2.0 * (control_y - start_y);
-        y_c = start_y;
-
-        self.draw_quadratic_curve(x_a, x_b, x_c, y_a, y_b, y_c)
-
-    def draw_arc(self, center_x, center_y, radius, start_angle, end_angle):
-        self.commands.append(["draw_arc", center_x, center_y, radius, start_angle, end_angle])
-
-
-
-def pack_command(command) -> bytes:
-
-    data = b''
-
-    if command[0] == "set_config":
-        data = struct.pack("<Ifff", 1, command[1], command[2], command[3])
-    
-    elif command[0] == "move":
-        data = struct.pack("<Iffff", 2, command[1], command[2], command[3], command[4])
-    
-    elif command[0] == "draw_dot":
-        data = struct.pack("<Iff", 3, command[1], command[2])
-    
-    elif command[0] == "draw_line":
-        data = struct.pack("<Iffff", 4, command[1], command[2], command[3], command[4])
-    
-    elif command[0] == "draw_quadratic_curve":
-        data = struct.pack("<Iffffff", 5, command[1], command[2], command[3], command[4], command[5], command[6])
-    
-    elif command[0] == "draw_arc":
-        data = struct.pack("<Iffffff", 6, command[1], command[2], command[3], command[4], command[5], command[6])
-
-    # padding
-    if len(data) < 28:
-        data += b'\x00' * (28 - len(data))
-
-    return data
+from CommandBuffer import CommandBuffer, pack_command
+import time
 
 
 class CommunicationInterface:
     def __init__(self, server_ip, server_port):
         self.command_buffers = queue.Queue()
-        self.connection = WifiInterface.WifiInterface(server_ip, server_port)\
+        self.connection = WifiInterface.WifiInterface(server_ip, server_port)
         
-        self.on_pc_control_mode_end = lambda: None
-        self.on_image_recieve = lambda: None
+        self.pc_control_mode_end_callback = lambda: None
+        self.image_recieve_callback = lambda: None
+
+        self.should_terminate = False
 
     def submit_command_buffer(self, command_buffer):
         self.command_buffers.put(command_buffer)
 
     def on_pc_control_mode_end(self, callback):
-        self.on_pc_control_mode_end = callback
+        self.pc_control_mode_end_callback = callback
 
     def on_image_recieve(self, callback):
-        self.on_image_recieve = callback
+        self.image_recieve_callback = callback
 
     def terminate(self):
-        self.command_buffers.put(None)
+        self.should_terminate = True
         self.thread.join()
 
 
@@ -98,17 +38,47 @@ class CommunicationInterface:
         
 
     def communicate_task(self):
+        if self.connection.connect():
+            print("Connected")
         
-        self.connection.connect()
-        print("Connected to ESP32")
-
         current_command_buffer = None
+        image_data_incoming = False
+
+        start_time = time.time()
+        timer = 0
 
         while True:
+            
+            if self.connection.client is not None:
+                #self.connection.close_connection()
+                pass
+
+            end_time = time.time()
+            dt = end_time - start_time
+            start_time = end_time
+            timer += dt
+
+            if self.should_terminate:
+                break
+    
+            # Reconnect every second
+            if timer > 1:
+                self.connection.connect()
+                print("Connected")
+                timer = 0
+
+            if self.connection.client is None:
+                continue
 
             # Listen for message
-            message = self.connection.read_bytes()
+            message = self.connection.read_bytes(0.8)
+            if message is None:
+                continue
+
+            print(f"Length of message: {len(message)}")
+
             type = chr(message[0])
+            print(f"Type: {type}")
 
             if type == 'a': # ESP asks for command
 
@@ -120,10 +90,6 @@ class CommunicationInterface:
                 request_length = message[1]
                 if current_command_buffer is None:
                     current_command_buffer = self.command_buffers.get()
-
-                    # Terminate 
-                    if current_command_buffer is None:
-                        break
 
                 command_data = b''
 
@@ -144,25 +110,33 @@ class CommunicationInterface:
 
             elif type == 'e': # ESP ends PCControl mode
                 self.command_buffers = queue.Queue()
-                self.on_pc_control_mode_end()
+                self.pc_control_mode_end_callback()
 
 
             elif type == 'h': # Image header
-                image_width = int.from_bytes(message[1:3], 'little')
-                image_height = int.from_bytes(message[3:5], 'little')
+                image_width = int.from_bytes(message[1:3], 'big')
+                image_height = int.from_bytes(message[3:5], 'big')
                 print(f"Image size: {image_width} x {image_height}")
 
+                message = self.connection.read_bytes(1.0)
 
-            elif type == 'i': # Image data
-
-                if len(message) - 1 != image_width * image_height:
-                    print("Invalid image data")
-                    print(len(message) - 1)
+                if message is None:
+                    print("Image data not received")
                     continue
 
-                img = Image.frombytes('L', (image_width, image_height), message[1:])
-                img.show()
+                if len(message) != image_width * image_height:
+                    print("Invalid image data")
+                    print(f"Length: {len(message)}")
+                    continue
 
-                self.on_image_recieve(img)
+                print("Image data received")
+
+                img = Image.frombytes('L', (image_width, image_height), message)
+                #img.show()
+
+                self.image_recieve_callback(img)
+                image_data_incoming = False
+
+
 
             

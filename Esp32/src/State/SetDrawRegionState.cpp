@@ -12,7 +12,7 @@ void SetDrawRegionState::OnEnter()
 
 void SetDrawRegionState::OnUpdate(float dt)
 {
-
+    IO::PullData();
 }
 
 void SetDrawRegionState::OnExit()

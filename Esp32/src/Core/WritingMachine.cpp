@@ -66,7 +66,7 @@ void WritingMachine::OnUpdate(float dt)
 
     NextStroke();
 
-    m_CoreXY.WaitFinish();
+    //m_CoreXY.WaitFinish();
 }
 
 void WritingMachine::NextStroke()

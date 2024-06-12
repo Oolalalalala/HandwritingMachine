@@ -19,7 +19,7 @@ static char s_MenuItems[][21] = { " Modes",                        // 0
                                       " Manual Calibration",       // 11 
                                   " Settings",                     // 12
                                       " Connect to WIFI",          // 13
-                                      " Local IP Address"          // 14
+                                      " Accept Connection"         // 14
                                 };
 
 static const int s_NextItemIndex[] = { 8, 2, 5, 4, 2, 0, 7, 5, 12, 10, 11, 8, 0, 14, 12 }; // Set next item to parent item for the last items
@@ -115,7 +115,7 @@ void MenuState::OnUpdate(float dt)
 
         if (s_Data.SelectedIndex == 14)
         {
-            ESP32Program::Get().SwitchState(State::ShowServerIP);
+            ESP32Program::Get().SwitchState(State::AcceptConnection);
             return;
         }
 
@@ -130,7 +130,6 @@ void MenuState::OnUpdate(float dt)
     {
         s_Data.LastInputTime = millis();
         
-        Serial.println("Cancel");
         int parentIndex = s_Data.SelectedIndex;
 
         while (s_NextItemIndex[parentIndex] > parentIndex)
@@ -203,11 +202,7 @@ void MenuState::OnUpdate(float dt)
 
     if (!s_Data.RequireRefreshScreen)
         return;
-
-    Serial.print(s_Data.SelectedIndex);
-    Serial.print(' ');
-    Serial.println(s_Data.ViewWindowBegin);
-    
+        
     IO::ClearDisplay();
 
     for (int i = 0, optionIndex = s_Data.ViewWindowBegin; i < 4; i++, optionIndex = s_NextItemIndex[optionIndex])

@@ -1,4 +1,4 @@
-#include "ShowServerIPState.h"
+#include "AcceptConnectionState.h"
 
 
 #include <Arduino.h>
@@ -6,14 +6,14 @@
 #include "../Core/IO.h"
 #include "../Core/WifiInterface.h"
 
-struct ShowServerIPData
+struct AcceptConnectionData
 {
-    bool HasWifiConnection;
+    bool HasWifiConnection; 
 };
 
-static ShowServerIPData s_Data;
+static AcceptConnectionData s_Data;
 
-void ShowServerIPState::OnEnter()
+void AcceptConnectionState::OnEnter()
 {
     IO::ClearDisplay();
 
@@ -21,14 +21,14 @@ void ShowServerIPState::OnEnter()
 
     if (s_Data.HasWifiConnection)
     {
-        if (WifiInterface::HasClient())
+        if (WifiInterface::HasPreviousConnection())
             IO::DisplayMessage(0, "Client connected");
         else
             IO::DisplayMessage(0, "Waiting for client");
 
-        const char* ip = WifiInterface::GetIPAddress().toString().c_str();
+        String ip = WifiInterface::GetIPAddress().toString();
         IO::DisplayMessage(1, "Server IP: ");
-        IO::DisplayMessage(2, ip);
+        IO::DisplayMessage(2, ip.c_str());
         IO::DisplayMessage(3, "Port: 8000");
 
         if (!WifiInterface::ServerEnabled())
@@ -41,8 +41,10 @@ void ShowServerIPState::OnEnter()
 
 }
 
-void ShowServerIPState::OnUpdate(float dt)
+void AcceptConnectionState::OnUpdate(float dt)
 {
+    IO::PullData();
+
     if (IO::IsButtonDown(Button::Cancel))
     {
         ESP32Program::Get().SwitchState(State::Menu);
@@ -52,13 +54,15 @@ void ShowServerIPState::OnUpdate(float dt)
     if (!s_Data.HasWifiConnection)
         return;
 
-    WifiInterface::TryClientConnection();
+    bool result = WifiInterface::TryClientConnection();
 
-    if (WifiInterface::HasClient())
+    if (result)
+    {
         IO::DisplayMessage(0, "Client connected");
+        WifiInterface::DumpClient();
+    }
 }
 
-void ShowServerIPState::OnExit()
+void AcceptConnectionState::OnExit()
 {
-
 }

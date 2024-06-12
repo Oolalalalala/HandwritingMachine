@@ -83,7 +83,7 @@ void ConnectToWifiState::OnUpdate(float dt)
         if (s_Data.Timer > 1.0f)
         {
             s_Data.Timer -= 1.0f;
-            s_Data.DotCount = (s_Data.DotCount + 1) % 3;
+            s_Data.DotCount = (s_Data.DotCount + 1) % 4;
 
             char message[21] = "Connecting";
             for (int i = 0; i < s_Data.DotCount; i++)

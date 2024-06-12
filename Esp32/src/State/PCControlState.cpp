@@ -26,7 +26,7 @@ void PCControlState::OnEnter()
 {
     IO::ClearDisplay();
 
-    s_Data.HasClient = WifiInterface::HasClient();   
+    s_Data.HasClient = WifiInterface::HasPreviousConnection();   
     if (s_Data.HasClient)
     {
         IO::DisplayMessage(0, "PC Controling");
@@ -48,6 +48,8 @@ void PCControlState::OnEnter()
 
 void PCControlState::OnUpdate(float dt)
 {
+    IO::PullData();
+
     if (IO::IsButtonDown(Button::Cancel))
     {
         ESP32Program::Get().SwitchState(State::Menu);
@@ -57,8 +59,10 @@ void PCControlState::OnUpdate(float dt)
         {
             uint8_t endMessage[1];
             endMessage[0] = END_BYTE;
-
+            
+            WifiInterface::WaitForClientConnection();
             WifiInterface::SendBytesToClient(endMessage, 1);
+            WifiInterface::DumpClient();
         }
 
         return;
@@ -81,7 +85,7 @@ void PCControlState::OnUpdate(float dt)
         s_Data.PauseTimer += dt;
 
         // Ask for commands
-        if (s_Data.PuaseTimer > RETRY_INTERVAL)
+        if (s_Data.PauseTimer > RETRY_INTERVAL)
         {
             s_Data.PauseTimer = 0.0f;
 
@@ -89,7 +93,9 @@ void PCControlState::OnUpdate(float dt)
             uint8_t request[2];
             request[0] = ASK_FOR_COMMAND_BYTE;
             request[1] = (uint8_t)CommandBuffer::Capacity();
-
+            
+            WifiInterface::DumpClient();
+            WifiInterface::WaitForClientConnection();
             WifiInterface::SendBytesToClient(request, 2);
         }
 
@@ -123,10 +129,7 @@ void PCControlState::ReadAndParseCommands()
     // Error check
     if (end - s_Data.ReadBuffer != 1 + commandCount * sizeof(MachineCommand))
     {
-        uint8_t endMessage[1];
-        endMessage[0] = END_BYTE;
-        WifiInterface::SendBytesToClient(endMessage, 1);
-
+        Serial.println("Error in ReadAndParseCommands");
         ESP32Program::Get().SwitchState(State::Menu);
         return;
     }

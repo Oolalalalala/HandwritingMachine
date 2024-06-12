@@ -11,6 +11,7 @@ void TicTacToeState::OnEnter()
 
 void TicTacToeState::OnUpdate(float dt)
 {
+    IO::PullData();
 }
 
 void TicTacToeState::OnExit()

@@ -1,7 +1,7 @@
-#ifndef ALLOW_CONNECTION_STATE_H
-#define ALLOW_CONNECTION_STATE_H
+#ifndef ACCEPT_CONNECTION_STATE_H
+#define ACCEPT_CONNECTION_STATE_H
 
-class AllowConnectionState
+class AcceptConnectionState
 {
 public:
     static void OnEnter();

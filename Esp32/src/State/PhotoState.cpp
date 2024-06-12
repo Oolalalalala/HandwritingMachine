@@ -9,16 +9,16 @@
 
 
 #define IMAGE_HEADER_BYTE 'h'
-#define IMAGE_DATA_BYTE 'i'
 
 #define PEN_SPEED 20 // (mm/s)
 #define SEGMENT_TIME 0.1f // (s)
-#define JOYSTICK_DEADZONE 100
+#define JOYSTICK_DEADZONE 512
 
 struct PhotoStateData
 {
     unsigned long LastPhotoTime = 0; // (ms)
     bool HasClient;
+    bool MessageDimmed;
 };
 
 static PhotoStateData s_Data;
@@ -28,7 +28,7 @@ void PhotoState::OnEnter()
     IO::ClearDisplay();
     IO::DisplayMessage(0, "-Photo Mode");
 
-    s_Data.HasClient = WifiInterface::HasClient();
+    s_Data.HasClient = WifiInterface::HasPreviousConnection();
     if (s_Data.HasClient)
     {
         IO::DisplayMessage(1, "-Enter to take photo");
@@ -76,19 +76,32 @@ void PhotoState::OnUpdate(float dt)
 
         // Send photo
         uint8_t header[5];
-        header[0] = 'p';
-        header[1] = fb->width & 0xFF;
-        header[2] = fb->width >> 8;
-        header[3] = fb->height & 0xFF;
-        header[4] = fb->height >> 8;
-
+        header[0] = IMAGE_HEADER_BYTE;
+        
+        // Width and height (big endian)
+        header[1] = fb->width >> 8;
+        header[2] = fb->width & 0xFF;
+        header[3] = fb->height >> 8;
+        header[4] = fb->height & 0xFF;
+        
+        WifiInterface::WaitForClientConnection();
         WifiInterface::SendBytesToClient(header, 5);
         WifiInterface::SendBytesToClient((uint8_t*)fb->buf, fb->len);
+        WifiInterface::DumpClient();
 
         Camera::ReleaseFramebuffer();
+
+        s_Data.MessageDimmed = false;
+    }
+
+    if (!s_Data.MessageDimmed && millis() - s_Data.LastPhotoTime > 1500)
+    {
+        s_Data.MessageDimmed = true;
+        IO::DisplayMessage(3, "");
     }
 
 
+    
     Vector2Int joystick = IO::GetJoystickPosition();
 
     // Deadzone
@@ -114,7 +127,7 @@ void PhotoState::OnUpdate(float dt)
     float ratio = max(abs(joystick.X), abs(joystick.Y)) / length; // Used to normalize (due to square to circle mapping)
 
     Vector2 delta = Vector2(joystick.X, joystick.Y) * ratio;
-    delta = delta / (512 - JOYSTICK_DEADZONE) * PEN_SPEED * SEGMENT_TIME;
+    delta = delta / (2048 - JOYSTICK_DEADZONE) * PEN_SPEED * SEGMENT_TIME;
 
     auto& coreXY = ESP32Program::Get().GetCoreXY();
     coreXY.Move(delta, 1000000.0f * SEGMENT_TIME);

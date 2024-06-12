@@ -13,7 +13,7 @@
 #define STEPPER_MICROSTEPS 16 // Set ms1, ms2, ms3 of A4988 to low
 #define STEPPER_WHEEL_RADIUS 5.0f // (mm)
 #define DISPLACEMENT_PER_STEP (STEPPER_WHEEL_RADIUS * 2 * PI / STEPPER_STEPS_PER_REVOLUTION / STEPPER_MICROSTEPS) // (mm)
-#define CONSECUTIVE_NEXT_ACTION_INTERVALS 0 // (us), if next action interval is less than this, we keep updating the steppers
+#define CONSECUTIVE_NEXT_ACTION_INTERVALS 100 // (us), if next action interval is less than this, we keep updating the steppers
 
 #define CAP_RPM 240.0f // The max speed of the stepper motor, when too low, may cause the motors to desync
 #define BOUNDDARY_X 20.0f

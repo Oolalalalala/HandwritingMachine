@@ -1,3 +1,4 @@
+#pragma once
 
 #include <driver/i2c.h>
 #include <esp_log.h>
@@ -7,6 +8,7 @@
 #include "sdkconfig.h"
 #include "rom/ets_sys.h"
 #include <esp_log.h>
+
 
 // LCD module defines
 #define LCD_LINEONE             0x00        // start of line 1

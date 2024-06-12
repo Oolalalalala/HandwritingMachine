@@ -1,5 +1,6 @@
 import socket
 from PIL import Image
+import time
 
 # Constants
 acknowledge_byte = b'\x06'
@@ -12,22 +13,30 @@ class WifiInterface:
     def __init__(self, server_ip, server_port):
         self.server_ip = server_ip
         self.server_port = server_port
+        self.client = None
 
     def connect(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client.connect((self.server_ip, self.server_port))
+        
+
+    def close_connection(self):
+        self.client.close()
+        self.client = None
 
     
-    def read_bytes(self):
+    def read_bytes(self, timeout):
+        start_time = time.time()
+
         while True:
             if self.client.recv(1) == transmission_begin_byte:
                 break
-        
-        print("Transmission begin received")
+
+            if time.time() - start_time > timeout:
+                return None
 
         length = int.from_bytes(self.client.recv(4), 'big')
 
-        print(f"Receiving {length} bytes")
 
         data = b''
         while len(data) < length:

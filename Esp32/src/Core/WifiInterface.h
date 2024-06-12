@@ -17,9 +17,10 @@ public:
 
     static void BeginServer();
     static bool ServerEnabled();
-    static void TryClientConnection(); // Non-blocking
+    static bool TryClientConnection(); // Non-blocking
     static void WaitForClientConnection();
-    static bool HasClient();
+    static bool HasPreviousConnection();
+    static void DumpClient();
 
     static void SendBytesToClient(const uint8_t* data, unsigned long size);
     static bool IncomingFromClient(); // Returns true if there is a message incoming
