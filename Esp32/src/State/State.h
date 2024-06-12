@@ -14,7 +14,7 @@ enum class State
     ManualCalibration,
     SetDrawRegion, 
     ConnectToWifi,
-    ShowServerIP
+    AllowConnection
 };
 
 #endif

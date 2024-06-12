@@ -80,7 +80,6 @@ if __name__ == '__main__':
         if len(message) != 320 * 240:
             print("Invalid image data")
             print(len(message))
-            exit()
 
         img = Image.frombytes('L', (320, 240), bytes(message))
         img.show()

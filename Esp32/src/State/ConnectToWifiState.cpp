@@ -66,6 +66,8 @@ void ConnectToWifiState::OnUpdate(float dt)
     {
         if (WifiInterface::IsConnected())
         {
+            IO::DisplayMessage(0, "WiFi Connected");
+            delay(1000);
             ESP32Program::Get().SwitchState(State::Menu);
             return;
         }

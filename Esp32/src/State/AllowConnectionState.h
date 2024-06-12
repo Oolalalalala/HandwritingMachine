@@ -1,7 +1,7 @@
-#ifndef SHOW_SERVER_IP_STATE_H
-#define SHOW_SERVER_IP_STATE_H
+#ifndef ALLOW_CONNECTION_STATE_H
+#define ALLOW_CONNECTION_STATE_H
 
-class ShowServerIPState
+class AllowConnectionState
 {
 public:
     static void OnEnter();

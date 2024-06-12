@@ -14,7 +14,7 @@
 #include "../State/PCControlState.h"
 #include "../State/PhotoState.h"
 #include "../State/SetDrawRegionState.h"
-#include "../State/ShowServerIPState.h"
+#include "../State/AllowConnectionState.h"
 #include "../State/TicTacToeState.h"
 
 ESP32Program* ESP32Program::s_Instance = nullptr;
@@ -48,8 +48,6 @@ void ESP32Program::Initialize()
     //commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
     //commandBuffer.DrawArc({80.0f, 0.0f}, 20.0f, PI, 3 * PI);
     //commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, 2 * PI, 3 * PI);
-
-    //m_CoreXY.Enable();
 
 }
 
@@ -106,7 +104,7 @@ void ESP32Program::OnUpdate()
         }
         case State::ShowServerIP:
         {
-            ShowServerIPState::OnUpdate(dt);
+            AllowConnectionState::OnUpdate(dt);
             break;
         }
     }
@@ -163,7 +161,7 @@ void ESP32Program::OnUpdate()
             }
             case State::ShowServerIP:
             {
-                ShowServerIPState::OnExit();
+                AllowConnectionState::OnExit();
                 break;
             }
         }
@@ -217,7 +215,7 @@ void ESP32Program::OnUpdate()
             }
             case State::ShowServerIP:
             {
-                ShowServerIPState::OnEnter();
+                AllowConnectionState::OnEnter();
                 break;
             }
         }

@@ -6,11 +6,20 @@
 #include "../Core/IO.h"
 #include "../Core/WifiInterface.h"
 
+struct ShowServerIPData
+{
+    bool HasWifiConnection;
+};
+
+static ShowServerIPData s_Data;
+
 void ShowServerIPState::OnEnter()
 {
     IO::ClearDisplay();
 
-    if (WifiInterface::IsConnected())
+    s_Data.HasWifiConnection = WifiInterface::IsConnected();
+
+    if (s_Data.HasWifiConnection)
     {
         if (WifiInterface::HasClient())
             IO::DisplayMessage(0, "Client connected");
@@ -21,6 +30,9 @@ void ShowServerIPState::OnEnter()
         IO::DisplayMessage(1, "Server IP: ");
         IO::DisplayMessage(2, ip);
         IO::DisplayMessage(3, "Port: 8000");
+
+        if (!WifiInterface::ServerEnabled())
+            WifiInterface::BeginServer();
     }
     else
     {
@@ -36,6 +48,14 @@ void ShowServerIPState::OnUpdate(float dt)
         ESP32Program::Get().SwitchState(State::Menu);
         return;
     }
+
+    if (!s_Data.HasWifiConnection)
+        return;
+
+    WifiInterface::TryClientConnection();
+
+    if (WifiInterface::HasClient())
+        IO::DisplayMessage(0, "Client connected");
 }
 
 void ShowServerIPState::OnExit()

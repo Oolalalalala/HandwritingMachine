@@ -16,6 +16,7 @@ public:
     static IPAddress GetIPAddress();
 
     static void BeginServer();
+    static bool ServerEnabled();
     static void TryClientConnection(); // Non-blocking
     static void WaitForClientConnection();
     static bool HasClient();

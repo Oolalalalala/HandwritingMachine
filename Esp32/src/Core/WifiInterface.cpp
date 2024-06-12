@@ -85,6 +85,11 @@ void WifiInterface::BeginServer()
     s_Data.Server.begin();
 }
 
+bool WifiInterface::ServerEnabled()
+{
+    return (bool)s_Data.Server;
+}
+
 void WifiInterface::TryClientConnection()
 {
     s_Data.Client = s_Data.Server.accept();
