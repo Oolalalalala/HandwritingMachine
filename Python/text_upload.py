@@ -75,7 +75,7 @@ def main():
         text = input("Enter text: ")
     #testing mode
     elif mode == "123":
-        text = "a"
+        text = "j"
         current_dir = os.path.join(os.getcwd())
         font_dir = os.path.join(current_dir, "Python", "fonts", "Arial.ttf")
         font_size = 12
