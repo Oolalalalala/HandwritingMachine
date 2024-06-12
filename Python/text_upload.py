@@ -16,7 +16,7 @@ def upload_text_as_commands(text: str, font_dir: str, font_size: int):
 def convert_text_to_commands(character: str, font_dir: str, font_size: int):
     char = character
     font = describe.openFont(font_dir)
-    g = glyph.Glyph(char)
+    g = glyph.Glyph(glyphquery.glyphName(font, char))
     contours = g.calculateContours(font)
     
     
