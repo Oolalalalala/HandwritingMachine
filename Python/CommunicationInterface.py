@@ -89,7 +89,7 @@ class CommunicationInterface:
                 if current_command_buffer is None and self.command_buffers.empty():
                     continue
                 
-                request_length = message[1]
+                request_length = int.from_bytes(message[1:3], 'big')
                 if current_command_buffer is None:
                     current_command_buffer = self.command_buffers.get()
 
@@ -98,13 +98,15 @@ class CommunicationInterface:
                 actual_length = request_length
                 for i in range(request_length):
                     if len(current_command_buffer.commands) == 0:
-                        actual_length = i + 1
+                        actual_length = i
                         break
 
                     command = current_command_buffer.commands.pop(0)
                     command_data += pack_command(command)
-
-                command_data = struct.pack("<B", actual_length) + command_data
+                
+                print(f"Actual length: {actual_length}")
+                # pack as unsigned short
+                command_data = struct.pack(">H", actual_length) + command_data
                 self.connection.send_bytes(command_data)
 
                 if len(current_command_buffer.commands) == 0:
@@ -173,3 +175,14 @@ class CommunicationInterface:
 
 
             
+
+if __name__ == "__main__":
+    communication_interface = CommunicationInterface("192.168.225.42", 8000)
+
+    buffer = CommandBuffer()
+    buffer.move(0, 0, 50, 50)
+    buffer.draw_quadratic_bezier(50, 50, 80, 80, 110, 50)
+    buffer.draw_line(110, 50, 10, 130)
+
+    communication_interface.submit_command_buffer(buffer)
+    communication_interface.begin()

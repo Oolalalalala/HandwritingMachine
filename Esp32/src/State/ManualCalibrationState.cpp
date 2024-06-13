@@ -94,5 +94,5 @@ void ManualCalibrationState::OnUpdate(float dt)
 
 void ManualCalibrationState::OnExit()
 {
-
+    
 }
