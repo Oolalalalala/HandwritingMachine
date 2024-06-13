@@ -14,10 +14,22 @@ pt_to_mm = 127/360
 
 class Plotter: #Not used and not finished, should be used for previewing the result
     def __init__(self):
-        self.contours_plot = plt.figure(1)
-        self.smooth_plot = plt.figure(2)
-        self.contours_plot.gca().set_aspect('equal')
-        self.smooth_plot.gca().set_aspect('equal')
+        pass
+        
+    def add_contour(self, contour):
+        x = []
+        y = []
+        for point in contour:
+            if point[1] == 1:
+                plt.plot(point[0][0], point[0][1], 'ro')
+            else:
+                plt.plot(point[0][0], point[0][1], 'bo')
+            x.append(point[0][0])
+            y.append(point[0][1])
+        plt.plot(x, y)
+        
+    def show_contours(self):
+        plt.show()
         
 
 def convert_text_to_commands(text: str, font_dir: str, font_size: int):
@@ -59,7 +71,7 @@ def convert_char_to_commands(char: str, font_dir: str, font_size: float, current
     for contour in contours:
         adjusted_contour = []
         for point in contour:
-            adjusted_contour.append(((starting_pos[0] + point[0][0] * font_size / line_height, starting_pos[1] + (-1) * point[0][1] * font_size / line_height), point[1]))
+            adjusted_contour.append(((starting_pos[0] + point[0][0] * font_size / line_height, starting_pos[1] + point[0][1] * font_size / line_height), point[1]))
         adjusted_contours.append(adjusted_contour)
         adjusted_contour_homes.append(adjusted_contour[0][0])
     # print("debug homes")
@@ -68,7 +80,7 @@ def convert_char_to_commands(char: str, font_dir: str, font_size: float, current
     current_contour_home = current_pos
     i = 0
     for adjusted_contour in adjusted_contours:
-        
+        Plotter().add_contour(adjusted_contour)
         #Move to the starting point of the contour
         if adjusted_contour[0][0] != current_contour_home:
             # print("debug pre_home")
@@ -214,7 +226,7 @@ def main():
         font_size = input("Enter font size (between 12 and 64): ")
         try:
             font_size = int(font_size)
-            if font_size >= 12 and font_size <= 64:
+            if font_size >= 18 and font_size <= 64:
                 font_size_selected = True
             else:
                 print("Invalid font size, please try again.")
@@ -236,6 +248,7 @@ def main():
     
     print("Processing and uploading text...")
     convert_text_to_commands(text, font_dir, font_size)
+    Plotter().show_contours()
     com.submit_command_buffer(buffer)
     
     print("Writing text...")
