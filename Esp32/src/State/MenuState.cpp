@@ -14,7 +14,7 @@ static char s_MenuItems[][21] = { " Modes",                        // 0
                                           " Take Photo",           // 6
                                           " ???",                  // 7 
                                   " Calibration",                  // 8
-                                      " Set Draw Region(A4)",      // 9
+                                      " Set Draw Origin",          // 9
                                       " Auto Calibration",         // 10 
                                       " Manual Calibration",       // 11 
                                   " Settings",                     // 12

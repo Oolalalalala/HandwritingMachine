@@ -95,6 +95,7 @@ class CommunicationInterface:
 
                 command_data = b''
 
+                actual_length = request_length
                 for i in range(request_length):
                     if len(current_command_buffer.commands) == 0:
                         actual_length = i + 1

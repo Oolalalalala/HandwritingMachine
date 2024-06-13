@@ -30,6 +30,7 @@ def convert_text_to_commands(text: str, font_dir: str, font_size: int):
 
 #Not the final version, just for testing
 def convert_char_to_commands(char: str, font_dir: str, font_size: float, current_pos: tuple, starting_pos: tuple):
+    print("Processing character: " + char)
     font = describe.openFont(font_dir)
     g = glyph.Glyph(glyphquery.glyphName(font, char))
     width = glyphquery.width(font, g.glyphName)
@@ -61,14 +62,21 @@ def convert_char_to_commands(char: str, font_dir: str, font_size: float, current
             adjusted_contour.append(((starting_pos[0] + point[0][0] * font_size / line_height, starting_pos[1] + (-1) * point[0][1] * font_size / line_height), point[1]))
         adjusted_contours.append(adjusted_contour)
         adjusted_contour_homes.append(adjusted_contour[0][0])
+    # print("debug homes")
+    # print(adjusted_contour_homes)
     
     current_contour_home = current_pos
+    i = 0
     for adjusted_contour in adjusted_contours:
         
         #Move to the starting point of the contour
         if adjusted_contour[0][0] != current_contour_home:
-            buffer.move(current_contour_home[0], current_contour_home[1], adjusted_contour[0][0], adjusted_contour[0][1])
-            current_contour_home = adjusted_contour[0]
+            # print("debug pre_home")
+            # print(current_contour_home)
+            buffer.move(current_contour_home[0], current_contour_home[1], adjusted_contour_homes[i][0], adjusted_contour[i][1])
+            current_contour_home = adjusted_contour_homes[i]
+            # print("debug")
+            # print(current_contour_home)
         
         #Create some temporary points
         pre_pre_point = adjusted_contour[-2]
@@ -117,8 +125,11 @@ def convert_char_to_commands(char: str, font_dir: str, font_size: float, current
             
             pre_pre_point = pre_point
             pre_point = point
+        
+        i += 1
     
-    return (adjusted_contours[-1][-1], width * font_size / line_height)
+    
+    return (adjusted_contour_homes[-1], width * font_size / line_height)
     
     
     
@@ -176,6 +187,7 @@ def main():
     Font and size selection
     """
     
+    current_dir = os.path.join(os.getcwd())
     font_list = ["Arial.ttf", "Times.ttf", "Consolas.ttf"]
     font_selected = False
     while not font_selected:

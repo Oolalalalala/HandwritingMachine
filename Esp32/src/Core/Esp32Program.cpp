@@ -37,7 +37,7 @@ void ESP32Program::Initialize(bool disableCamera)
     m_PenHolder.Initialize();
     m_WritingMachine.Initialize();
 
-    s_DisableCamera = true;
+    s_DisableCamera = disableCamera;
     if (!s_DisableCamera)
     {
         Camera::Initialize();

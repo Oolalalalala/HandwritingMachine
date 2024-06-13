@@ -50,7 +50,7 @@ private:
     MachineCommand NextCommand() { return m_Buffer.Pop(); }
 
 private:
-    static const int s_Capacity = 30;
+    static const int s_Capacity = 1000;
     RingBuffer<MachineCommand, s_Capacity> m_Buffer;
 };
 

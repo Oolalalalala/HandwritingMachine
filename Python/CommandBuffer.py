@@ -8,16 +8,16 @@ class CommandBuffer:
         self.commands.append(["set_config", stroke_segment_length, stroke_speed, hover_speed])
 
     def move(self, start_x, start_y, end_x, end_y):
-        self.commands.append(["move", start_x, start_y, end_x, end_y])
+        self.commands.append(["move", float(start_x), float(start_y), float(end_x), float(end_y)])
 
     def draw_dot(self, x, y):
-        self.commands.append(["draw_dot", x, y])
+        self.commands.append(["draw_dot", float(x), float(y)])
 
     def draw_line(self, start_x, start_y, end_x, end_y):
-        self.commands.append(["draw_line", start_x, start_y, end_x, end_y])
+        self.commands.append(["draw_line", float(start_x), float(start_y), float(end_x), float(end_y)])
 
     def draw_quadratic_curve(self, x_a, x_b, x_c, y_a, y_b, y_c):
-        self.commands.append(["draw_quadratic_curve", x_a, x_b, x_c, y_a, y_b, y_c])
+        self.commands.append(["draw_quadratic_curve", float(x_a), float(x_b), float(x_c), float(y_a), float(y_b), float(y_c)])
 
     def draw_quadratic_bezier(self, start_x, start_y, control_x, control_y, end_x, end_y):
         # Convert to quadratic curve
@@ -32,7 +32,7 @@ class CommandBuffer:
         self.draw_quadratic_curve(x_a, x_b, x_c, y_a, y_b, y_c)
 
     def draw_arc(self, center_x, center_y, radius, start_angle, end_angle):
-        self.commands.append(["draw_arc", center_x, center_y, radius, start_angle, end_angle])
+        self.commands.append(["draw_arc", float(center_x), float(center_y), float(radius),float(start_angle), float(end_angle)])
 
 
 

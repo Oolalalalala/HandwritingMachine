@@ -44,6 +44,7 @@ void PCControlState::OnEnter()
     }
 
     s_Data.Paused = true;
+    ESP32Program::Get().GetWritingMachine().Enable(true);
 }
 
 void PCControlState::OnUpdate(float dt)
@@ -119,6 +120,8 @@ void PCControlState::OnExit()
     writingMachine.GetCommandBuffer().Clear();
 
     free(s_Data.ReadBuffer);
+
+    ESP32Program::Get().GetCoreXY().LiftPen();
 }
 
 void PCControlState::ReadAndParseCommands()
