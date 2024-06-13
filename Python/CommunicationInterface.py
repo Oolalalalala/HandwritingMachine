@@ -5,6 +5,8 @@ import struct
 from PIL import Image
 from CommandBuffer import CommandBuffer, pack_command
 import time
+from DetectOOXX import detect_ooxx
+import numpy as np
 
 
 class CommunicationInterface:
@@ -137,6 +139,36 @@ class CommunicationInterface:
                 self.image_recieve_callback(img)
                 image_data_incoming = False
 
+            elif type == 'c': # OpenCV
+                image_width = int.from_bytes(message[1:3], 'big')
+                image_height = int.from_bytes(message[3:5], 'big')
+                print(f"Image size (OOXX): {image_width} x {image_height}")
+
+                message = self.connection.read_bytes(1.0)
+
+                if message is None:
+                    print("Image data (for OOXX) not received")
+                    continue
+
+                
+                if len(message) != image_width * image_height:
+                    print("Invalid image data (OOXX)")
+                    print(f"Length: {len(message)}")
+                    continue
+
+                print("Image data received")
+
+                img = np.frombuffer(message, dtype=np.uint8).reshape((image_height, image_width))
+                res = detect_ooxx(img)
+
+                if res is None:
+                    value = 0
+                elif res == 'O':
+                    value = 1
+                elif res == 'X':
+                    value = 2
+
+                self.connection.send_bytes(struct.pack("<B", value))
 
 
             

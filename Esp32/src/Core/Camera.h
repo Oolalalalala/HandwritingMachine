@@ -10,9 +10,7 @@ public:
     static void Initialize();
     static void Shutdown();
 
-    static bool Capture();
-    static camera_fb_t* GetFramebuffer();
-    static void ReleaseFramebuffer();
+    static camera_fb_t* Capture();
 };
 
 #endif

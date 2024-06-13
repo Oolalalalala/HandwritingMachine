@@ -12,7 +12,7 @@ void PenHolder::Initialize()
 {
     m_Servo.write(PEN_LIFT_ANGLE); // Set angle before starting the servo
 
-    m_Servo.attach(SERVO_PIN, 1000, 2000); 
+    m_Servo.attach(SERVO_PIN); 
 
     m_LiftTime = millis();
 }

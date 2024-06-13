@@ -51,7 +51,8 @@ void Camera::Initialize()
         Serial.print("Camera failed to initialize");
         return;
     }
-    
+
+    sensor_t* s = esp_camera_sensor_get();
 }
 
 void Camera::Shutdown()
@@ -63,27 +64,14 @@ void Camera::Shutdown()
     esp_camera_deinit();
 }
 
-bool Camera::Capture()
+camera_fb_t* Camera::Capture()
 {
     if (s_Framebuffer)
         esp_camera_fb_return(s_Framebuffer);
+    
+    delay(200); // Don't even know why delay is needed, but it seems to work
 
     s_Framebuffer = esp_camera_fb_get();
 
-    delay(100); // Don't even know why delay is needed, but it seems to work
-
-    return s_Framebuffer != nullptr;
-}
-
-camera_fb_t* Camera::GetFramebuffer()
-{
     return s_Framebuffer;
-}
-
-void Camera::ReleaseFramebuffer()
-{
-    if (s_Framebuffer)
-        esp_camera_fb_return(s_Framebuffer);
-
-    s_Framebuffer = nullptr;
 }

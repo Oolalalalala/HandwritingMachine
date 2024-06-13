@@ -11,8 +11,10 @@ public:
     ESP32Program();
     ~ESP32Program() = default;
 
-    void Initialize();
+    void Initialize(bool disableCamera);
     void OnUpdate();
+
+    bool CameraDisabled();
 
 public:
     // Singleton

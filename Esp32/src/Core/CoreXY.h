@@ -14,6 +14,8 @@ public:
     void Disable();
 
     void SetAbsolutePosition(Vector2 position); // (mm) Used to calibrate the absolute position
+    void SetCurrentPositionAsBoundary();
+    void SetBoundaryCheck(bool enabled) { m_BoundaryCheck = enabled; }
     void SetCurrentPositionOrigin(); // Set the current position as the origin
     void SetMaxSpeed(float speed); // (mm/s)
 
@@ -21,7 +23,6 @@ public:
     void MoveTo(Vector2 position, long duration); // Position in (mm)
     void WaitFinish(); // Block until the current move is finished
 
-    void SetBoundaryCheck(bool enabled) { m_BoundaryCheck = enabled; }
     bool IsMoving();
 
 private:
@@ -34,6 +35,7 @@ private:
     Vector2Int m_StepperCoordinate; // (steps)
 
     bool m_BoundaryCheck = false;
+    Vector2 m_BoundaryMax; // (mm)
 };
 
 #endif 

@@ -10,7 +10,7 @@
 #define SEGMENT_TIME 0.1f // (s)
 #define JOYSTICK_DEADZONE 512
 
-
+static bool s_OriginSet;
 
 void ManualCalibrationState::OnEnter()
 {
@@ -19,6 +19,12 @@ void ManualCalibrationState::OnEnter()
     IO::DisplayMessage(1, "-Enter to set origin");
     IO::DisplayMessage(2, "(Bottom-left corner)");
     IO::DisplayMessage(3, "-Cancel to exit");
+
+    
+    auto& coreXY = ESP32Program::Get().GetCoreXY();
+    coreXY.SetBoundaryCheck(false);
+
+    s_OriginSet = false;
 }
 
 void ManualCalibrationState::OnUpdate(float dt)
@@ -26,12 +32,26 @@ void ManualCalibrationState::OnUpdate(float dt)
     IO::PullData();
 
     auto& coreXY = ESP32Program::Get().GetCoreXY();
-
+    
     if (IO::IsButtonDown(Button::Enter))
     {
-        coreXY.SetAbsolutePosition({0.0f, 0.0f});
-        ESP32Program::Get().SwitchState(State::Menu);
-        return;
+        if (!s_OriginSet)
+        {
+            coreXY.SetAbsolutePosition({0.0f, 0.0f});
+            s_OriginSet = true;
+            
+            IO::DisplayMessage(1, "-Enter to set limit");
+            IO::DisplayMessage(2, "(Top-right corner)");
+            IO::DisplayMessage(3, "-Cancel to exit");
+        }
+        else
+        {
+            coreXY.SetCurrentPositionAsBoundary();
+            coreXY.SetBoundaryCheck(true);
+
+            ESP32Program::Get().SwitchState(State::Menu);
+            return;
+        }
     }
 
     if (IO::IsButtonDown(Button::Cancel))

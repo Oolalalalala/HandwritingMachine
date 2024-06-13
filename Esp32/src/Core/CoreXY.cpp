@@ -111,13 +111,13 @@ Vector2 CoreXY::ClampToBoundary(Vector2 position)
 {
     if (position.X < 0.0f)
         position.X = 0.0f;
-    else if (position.X > BOUNDDARY_X)
-        position.X = BOUNDDARY_X;
+    else if (position.X > m_BoundaryMax.X)
+        position.X = m_BoundaryMax.X;
 
     if (position.Y < 0.0f)
         position.Y = 0.0f;
-    else if (position.Y > BOUNDDARY_Y)
-        position.Y = BOUNDDARY_Y;
+    else if (position.Y > m_BoundaryMax.Y)
+        position.Y = m_BoundaryMax.Y;
 
     return position;
 }
@@ -146,6 +146,11 @@ void CoreXY::SetAbsolutePosition(Vector2 position)
 {
     m_Position = position;
     m_StepperCoordinate = CalculateStepperCoordinate(position);
+}
+
+void CoreXY::SetCurrentPositionAsBoundary()
+{
+    m_BoundaryMax = m_Position;
 }
 
 void CoreXY::SetCurrentPositionOrigin()

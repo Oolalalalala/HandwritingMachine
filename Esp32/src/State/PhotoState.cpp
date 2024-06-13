@@ -40,6 +40,9 @@ void PhotoState::OnEnter()
         IO::DisplayMessage(2, "-Cancel to exit");
     
     }
+
+    if (ESP32Program::Get().CameraDisabled())
+        ESP32Program::Get().SwitchState(State::Menu);
 }
 
 void PhotoState::OnUpdate(float dt)
@@ -59,8 +62,7 @@ void PhotoState::OnUpdate(float dt)
     // Take and send photo
     if (IO::IsButtonDown(Button::Enter) && millis() - s_Data.LastPhotoTime > 1000) // 1 second interval
     {   
-        Camera::Capture();
-        camera_fb_t* fb = Camera::GetFramebuffer();
+        camera_fb_t* fb = Camera::Capture();
 
         s_Data.LastPhotoTime = millis();
 
@@ -89,7 +91,6 @@ void PhotoState::OnUpdate(float dt)
         WifiInterface::SendBytesToClient((uint8_t*)fb->buf, fb->len);
         WifiInterface::DumpClient();
 
-        Camera::ReleaseFramebuffer();
 
         s_Data.MessageDimmed = false;
     }

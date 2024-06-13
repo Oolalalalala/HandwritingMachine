@@ -18,6 +18,7 @@ public:
     void OnUpdate(float dt);
     void Enable(bool enabled);
     bool IsWriting();
+    bool Finished() { return m_CommandBuffer.Empty() && !IsWriting(); }
 
 private:
     void NextStroke();
@@ -26,7 +27,7 @@ private:
     struct Config
     {
         float StrokeSegmentLength = 1.0f; // (mm)
-        float StrokeSpeed = 10.0f; // (mm/s)
+        float StrokeSpeed = 20.0f; // (mm/s)
         float HoverSpeed = 10.0f; // (mm/s)
     } m_Config;
 

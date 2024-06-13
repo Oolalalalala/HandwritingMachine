@@ -18,21 +18,31 @@
 #include "../State/TicTacToeState.h"
 
 ESP32Program* ESP32Program::s_Instance = nullptr;
+static bool s_DisableCamera = false;
+
+bool ESP32Program::CameraDisabled()
+{
+    return s_DisableCamera;
+}
 
 ESP32Program::ESP32Program()
     : m_NextState(State::None), m_WritingMachine(m_CoreXY, m_PenHolder)
 {
 }
 
-void ESP32Program::Initialize()
+void ESP32Program::Initialize(bool disableCamera)
 {
     IO::Initialize();
     m_CoreXY.Initialize();
     m_PenHolder.Initialize();
     m_WritingMachine.Initialize();
 
-    Camera::Initialize();
-    delay(1000); // Wait for camera to initialize
+    s_DisableCamera = true;
+    if (!s_DisableCamera)
+    {
+        Camera::Initialize();
+        delay(1500); // Wait for camera to initialize
+    }
 
     WifiInterface::Initialize();
 
@@ -40,14 +50,6 @@ void ESP32Program::Initialize()
 
     m_State = State::Menu;
     MenuState::OnEnter();
-
-    //auto& commandBuffer = m_WritingMachine.GetCommandBuffer();
-    //commandBuffer.DrawLine({0.0f, 0.0f}, {50.0f, 100.0f});
-    //commandBuffer.DrawQuadraticBezier({0.0f, 0.0f}, {0.0f, 100.0f}, {100.0f, 100.0f});
-    //commandBuffer.DrawArc({50.0f, 0.0f}, 50.0f, PI, 3 * PI);
-    //commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, PI, 2 * PI);
-    //commandBuffer.DrawArc({80.0f, 0.0f}, 20.0f, PI, 3 * PI);
-    //commandBuffer.DrawArc({30.0f, 0.0f}, 30.0f, 2 * PI, 3 * PI);
 
 }
 
