@@ -5,10 +5,14 @@ import ttfquery.glyph as glyph
 import numpy as np
 import matplotlib.pyplot as plt
 from CommandBuffer import *
-Buffer = CommandBuffer()
-natural_size = 1000
+from CommunicationInterface import CommunicationInterface
 
-class Plotter:
+buffer = CommandBuffer()
+com = CommunicationInterface("192.168.225.42", 8000)
+
+pt_to_mm = 127/360
+
+class Plotter: #Not used and not finished, should be used for previewing the result
     def __init__(self):
         self.contours_plot = plt.figure(1)
         self.smooth_plot = plt.figure(2)
@@ -16,79 +20,22 @@ class Plotter:
         self.smooth_plot.gca().set_aspect('equal')
         
 
-def upload_text_as_commands(text: str, font_dir: str, font_size: int):
+def convert_text_to_commands(text: str, font_dir: str, font_size: int):
+    current_pos = [0, 0]
+    starting_pos = [0, 0]
     for char in text:
-        convert_char_to_commands(char, font_dir, font_size)
+        r_current_pos, r_pre_char_width = convert_char_to_commands(char, font_dir, font_size, current_pos, starting_pos)
+        current_pos = r_current_pos
+        starting_pos[0] += r_pre_char_width
 
 #Not the final version, just for testing
-def convert_char_to_commands(char: str, font_dir: str, font_size: float):
+def convert_char_to_commands(char: str, font_dir: str, font_size: float, current_pos: tuple, starting_pos: tuple):
     font = describe.openFont(font_dir)
     g = glyph.Glyph(glyphquery.glyphName(font, char))
+    width = glyphquery.width(font, g.glyphName)
+    line_height = glyphquery.lineHeight(font)
     contours = g.calculateContours(font)
     
-    #Convert the contour to the correct size
-    adjusted_contours = []
-    for contour in contours:
-        adjusted_contour = []
-        for point in contour:
-            adjusted_contour.append((point[0] * font_size / natural_size, point[1] * font_size / natural_size))
-        adjusted_contours.append(adjusted_contour)
-    
-    print("Number of contours: " + str(len(contours)) + "\n")
-    
-    for contour in adjusted_contours:
-        #Print the original contour (for debugging purposes)
-        print(contour)
-        print()
-        
-        
-        
-        #Creating some temporary points
-        pre_pre_point = contour[-2]
-        pre_point = contour[-1]
-        
-        pre_temp_point = None
-        if pre_point[1] == 0 and pre_pre_point[1] == 0:
-            temp_point = (((pre_pre_point[0][0] + pre_point[0][0]) / 2, (pre_pre_point[0][1] + pre_point[0][1]) / 2), 1)
-        else:
-            temp_point = None
-        
-        #Convert and store the contour into the command buffer
-        for point in contour:
-            if point[1] == 0 and pre_point[1] == 1:
-                pass
-            elif point[1] == 1 and pre_point[1] == 1:
-                Buffer.draw_line(pre_point[0][0], pre_point[0][1], point[0][0], point[0][1])
-            elif point[1] == 1 and pre_point[1] == 0:
-                if pre_pre_point[1] == 1:
-                    Buffer.draw_quadratic_bezier(pre_pre_point[0][0], pre_pre_point[0][1],
-                                                 pre_point[0][0], pre_point[0][1],
-                                                 point[0][0], point[0][1])
-                elif pre_pre_point[1] == 0:
-                    Buffer.draw_quadratic_bezier(temp_point[0][0], temp_point[0][1],
-                                                 pre_point[0][0], pre_point[0][1],
-                                                 point[0][0], point[0][1])
-            elif point[1] == 0 and pre_point[1] == 0:
-                pre_temp_point = temp_point
-                temp_point = (((pre_point[0][0] + point[0][0]) / 2, (pre_point[0][1] + point[0][1]) / 2), 1)
-                if pre_pre_point[1] == 1:
-                    Buffer.draw_quadratic_bezier(pre_pre_point[0][0], pre_pre_point[0][1],
-                                                 pre_point[0][0], pre_point[0][1],
-                                                 temp_point[0][0], temp_point[0][1])
-                elif pre_pre_point[1] == 0:
-                    Buffer.draw_quadratic_bezier(pre_temp_point[0][0], pre_temp_point[0][1],
-                                                 pre_point[0][0], pre_point[0][1],
-                                                 temp_point[0][0], temp_point[0][1])
-            else:
-                print("Error while processing contours.")
-                print("Pre_pre_point: " + str(pre_pre_point))
-                print("Pre_point: " + str(pre_point))
-                print("Point: " + str(point))
-                return
-            
-            pre_pre_point = pre_point
-            pre_point = point
-            
     # #Print and plot the contours (for debugging purposes)
     # for coutour in contours:
     #     print(coutour)
@@ -104,6 +51,74 @@ def convert_char_to_commands(char: str, font_dir: str, font_size: float):
     #         y.append(point[0][1])
     #     plt.plot(x, y)
     # plt.show()
+    
+    #Convert the contour to the correct size
+    adjusted_contours = []
+    adjusted_contour_homes = []
+    for contour in contours:
+        adjusted_contour = []
+        for point in contour:
+            adjusted_contour.append(((starting_pos[0] + point[0][0] * font_size / line_height, starting_pos[1] + (-1) * point[0][1] * font_size / line_height), point[1]))
+        adjusted_contours.append(adjusted_contour)
+        adjusted_contour_homes.append(adjusted_contour[0][0])
+    
+    current_contour_home = current_pos
+    for adjusted_contour in adjusted_contours:
+        
+        #Move to the starting point of the contour
+        if adjusted_contour[0][0] != current_contour_home:
+            buffer.move(current_contour_home[0], current_contour_home[1], adjusted_contour[0][0], adjusted_contour[0][1])
+            current_contour_home = adjusted_contour[0]
+        
+        #Create some temporary points
+        pre_pre_point = adjusted_contour[-2]
+        pre_point = adjusted_contour[-1]
+        pre_temp_point = None
+        if pre_point[1] == 0 and pre_pre_point[1] == 0:
+            temp_point = (((pre_pre_point[0][0] + pre_point[0][0]) / 2, (pre_pre_point[0][1] + pre_point[0][1]) / 2), 1)
+        else:
+            temp_point = None
+        
+        #Convert and store the contour into the command buffer
+        for point in adjusted_contour:
+            if point[1] == 0 and pre_point[1] == 1:
+                pass
+            elif point[1] == 1 and pre_point[1] == 1:
+                buffer.draw_line(pre_point[0][0], pre_point[0][1], point[0][0], point[0][1])
+            elif point[1] == 1 and pre_point[1] == 0:
+                if pre_pre_point[1] == 1:
+                    buffer.draw_quadratic_bezier(pre_pre_point[0][0], pre_pre_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 point[0][0], point[0][1])
+                elif pre_pre_point[1] == 0:
+                    buffer.draw_quadratic_bezier(temp_point[0][0], temp_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 point[0][0], point[0][1])
+            elif point[1] == 0 and pre_point[1] == 0:
+                pre_temp_point = temp_point
+                temp_point = (((pre_point[0][0] + point[0][0]) / 2, (pre_point[0][1] + point[0][1]) / 2), 1)
+                if pre_pre_point[1] == 1:
+                    buffer.draw_quadratic_bezier(pre_pre_point[0][0], pre_pre_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 temp_point[0][0], temp_point[0][1])
+                elif pre_pre_point[1] == 0:
+                    buffer.draw_quadratic_bezier(pre_temp_point[0][0], pre_temp_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 temp_point[0][0], temp_point[0][1])
+            else:
+                print("Error while processing contours.")
+                pre_pre_point = ((pre_pre_point[0][0] - starting_pos[0]) * line_height / font_size, (pre_pre_point[0][1] - starting_pos[1]) * line_height / font_size, pre_pre_point[1])
+                pre_point = ((pre_point[0][0] - starting_pos[0]) * line_height / font_size, (pre_point[0][1] - starting_pos[1]) * line_height / font_size, pre_point[1])
+                point = ((point[0][0] - starting_pos[0]) * line_height / font_size, (point[0][1] - starting_pos[1]) * line_height / font_size, point[1])
+                print("Pre_pre_point: " + str(pre_pre_point))
+                print("Pre_point: " + str(pre_point))
+                print("Point: " + str(point))
+                return
+            
+            pre_pre_point = pre_point
+            pre_point = point
+    
+    return (adjusted_contours[-1][-1], width * font_size / line_height)
     
     
     
@@ -145,11 +160,11 @@ def main():
         text = input("Enter text: ")
     #testing mode
     elif mode == "123":
-        text = "a"
+        text = "abc"
         current_dir = os.path.join(os.getcwd())
         font_dir = os.path.join(current_dir, "Python", "fonts", "Arial.ttf")
         font_size = 12
-        upload_text_as_commands(text, font_dir, font_size)
+        convert_text_to_commands(text, font_dir, font_size)
         return
     else:
         print("Invalid mode")
@@ -207,9 +222,14 @@ def main():
     if confirm.lower() != 'y':
         return
     
-    print("Uploading text...")
-    upload_text_as_commands(text, font_dir, font_size)
-    print("Text uploaded successfully")
+    print("Processing and uploading text...")
+    convert_text_to_commands(text, font_dir, font_size)
+    com.submit_command_buffer(buffer)
+    
+    print("Writing text...")
+    com.on_pc_control_mode_end(lambda: print("Writing pulsed."))
+    com.begin()
+    return
     
 if __name__ == '__main__':
     main()
