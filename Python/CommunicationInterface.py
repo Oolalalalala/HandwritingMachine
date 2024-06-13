@@ -3,7 +3,7 @@ import queue
 import threading
 import struct
 from PIL import Image
-from CommandBuffer import CommandBuffer, pack_command
+from CommandBuffer import *
 import time
 from DetectOOXX import detect_ooxx
 import numpy as np

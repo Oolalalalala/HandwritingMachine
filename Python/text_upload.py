@@ -4,36 +4,106 @@ from ttfquery import glyphquery
 import ttfquery.glyph as glyph
 import numpy as np
 import matplotlib.pyplot as plt
-from CommandInterface import *
+from CommandBuffer import *
+Buffer = CommandBuffer()
+natural_size = 1000
 
+class Plotter:
+    def __init__(self):
+        self.contours_plot = plt.figure(1)
+        self.smooth_plot = plt.figure(2)
+        self.contours_plot.gca().set_aspect('equal')
+        self.smooth_plot.gca().set_aspect('equal')
+        
 
 def upload_text_as_commands(text: str, font_dir: str, font_size: int):
-    # for char in text:
-    #     convert_text_to_commands(char, font_url, font_size)
-    convert_text_to_commands(text[0], font_dir, font_size)
+    for char in text:
+        convert_char_to_commands(char, font_dir, font_size)
 
 #Not the final version, just for testing
-def convert_text_to_commands(character: str, font_dir: str, font_size: int):
-    char = character
+def convert_char_to_commands(char: str, font_dir: str, font_size: float):
     font = describe.openFont(font_dir)
     g = glyph.Glyph(glyphquery.glyphName(font, char))
     contours = g.calculateContours(font)
     
+    #Convert the contour to the correct size
+    adjusted_contours = []
+    for contour in contours:
+        adjusted_contour = []
+        for point in contour:
+            adjusted_contour.append((point[0] * font_size / natural_size, point[1] * font_size / natural_size))
+        adjusted_contours.append(adjusted_contour)
     
-    print("Number of contours: " + str(len(contours)))
-    print()
+    print("Number of contours: " + str(len(contours)) + "\n")
     
-    #Print and plot the contours
-    for coutour in contours:
-        print(coutour)
+    for contour in adjusted_contours:
+        #Print the original contour (for debugging purposes)
+        print(contour)
         print()
-        x = []
-        y = []
-        for point in coutour:
-            x.append(point[0][0])
-            y.append(point[0][1])
-        plt.plot(x, y)
-    plt.show()
+        
+        
+        
+        #Creating some temporary points
+        pre_pre_point = contour[-2]
+        pre_point = contour[-1]
+        
+        pre_temp_point = None
+        if pre_point[1] == 0 and pre_pre_point[1] == 0:
+            temp_point = (((pre_pre_point[0][0] + pre_point[0][0]) / 2, (pre_pre_point[0][1] + pre_point[0][1]) / 2), 1)
+        else:
+            temp_point = None
+        
+        #Convert and store the contour into the command buffer
+        for point in contour:
+            if point[1] == 0 and pre_point[1] == 1:
+                pass
+            elif point[1] == 1 and pre_point[1] == 1:
+                Buffer.draw_line(pre_point[0][0], pre_point[0][1], point[0][0], point[0][1])
+            elif point[1] == 1 and pre_point[1] == 0:
+                if pre_pre_point[1] == 1:
+                    Buffer.draw_quadratic_bezier(pre_pre_point[0][0], pre_pre_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 point[0][0], point[0][1])
+                elif pre_pre_point[1] == 0:
+                    Buffer.draw_quadratic_bezier(temp_point[0][0], temp_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 point[0][0], point[0][1])
+            elif point[1] == 0 and pre_point[1] == 0:
+                pre_temp_point = temp_point
+                temp_point = (((pre_point[0][0] + point[0][0]) / 2, (pre_point[0][1] + point[0][1]) / 2), 1)
+                if pre_pre_point[1] == 1:
+                    Buffer.draw_quadratic_bezier(pre_pre_point[0][0], pre_pre_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 temp_point[0][0], temp_point[0][1])
+                elif pre_pre_point[1] == 0:
+                    Buffer.draw_quadratic_bezier(pre_temp_point[0][0], pre_temp_point[0][1],
+                                                 pre_point[0][0], pre_point[0][1],
+                                                 temp_point[0][0], temp_point[0][1])
+            else:
+                print("Error while processing contours.")
+                print("Pre_pre_point: " + str(pre_pre_point))
+                print("Pre_point: " + str(pre_point))
+                print("Point: " + str(point))
+                return
+            
+            pre_pre_point = pre_point
+            pre_point = point
+            
+    # #Print and plot the contours (for debugging purposes)
+    # for coutour in contours:
+    #     print(coutour)
+    #     print()
+    #     x = []
+    #     y = []
+    #     for point in coutour:
+    #         if point[1] == 1:
+    #             plt.plot(point[0][0], point[0][1], 'ro')
+    #         else:
+    #             plt.plot(point[0][0], point[0][1], 'bo')
+    #         x.append(point[0][0])
+    #         y.append(point[0][1])
+    #     plt.plot(x, y)
+    # plt.show()
     
     
     
@@ -75,7 +145,7 @@ def main():
         text = input("Enter text: ")
     #testing mode
     elif mode == "123":
-        text = "j"
+        text = "a"
         current_dir = os.path.join(os.getcwd())
         font_dir = os.path.join(current_dir, "Python", "fonts", "Arial.ttf")
         font_size = 12

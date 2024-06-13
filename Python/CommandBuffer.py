@@ -21,13 +21,13 @@ class CommandBuffer:
 
     def draw_quadratic_bezier(self, start_x, start_y, control_x, control_y, end_x, end_y):
         # Convert to quadratic curve
-        x_a = start_x - 2.0 * control_x + end_x;
-        x_b = 2.0 * (control_x - start_x);
-        x_c = start_x;
+        x_a = start_x - 2.0 * control_x + end_x
+        x_b = 2.0 * (control_x - start_x)
+        x_c = start_x
 
-        y_a = start_y - 2.0 * control_y + end_y;
-        y_b = 2.0 * (control_y - start_y);
-        y_c = start_y;
+        y_a = start_y - 2.0 * control_y + end_y
+        y_b = 2.0 * (control_y - start_y)
+        y_c = start_y
 
         self.draw_quadratic_curve(x_a, x_b, x_c, y_a, y_b, y_c)
 
