@@ -62,6 +62,7 @@ void WritingMachine::OnUpdate(float dt)
             m_PenHolder.Drop();
             return;
         }
+        
     }
 
     NextStroke();

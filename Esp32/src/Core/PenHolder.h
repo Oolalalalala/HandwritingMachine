@@ -20,8 +20,8 @@ public:
 private:
     Servo m_Servo;
 
-    unsigned long m_LiftTime = 0;
-    unsigned long m_DropTime = 0;
+    unsigned long m_LastActionTime;
+    bool m_Lifting;
 };
 
 #endif 
