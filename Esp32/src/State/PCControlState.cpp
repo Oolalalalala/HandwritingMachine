@@ -91,13 +91,15 @@ void PCControlState::OnUpdate(float dt)
             s_Data.PauseTimer = 0.0f;
 
             // Ask for commands
-            uint8_t request[2];
+            uint8_t request[3];
             request[0] = ASK_FOR_COMMAND_BYTE;
-            request[1] = (uint8_t)CommandBuffer::Capacity();
+            unsigned short capacity = CommandBuffer::Capacity();
+            request[1] = (capacity >> 8) & 0xFF;
+            request[2] = capacity & 0xFF;
             
             WifiInterface::DumpClient();
             WifiInterface::WaitForClientConnection();
-            WifiInterface::SendBytesToClient(request, 2);
+            WifiInterface::SendBytesToClient(request, 3);
         }
 
         return;
@@ -121,18 +123,19 @@ void PCControlState::OnExit()
 
     free(s_Data.ReadBuffer);
 
-    ESP32Program::Get().GetCoreXY().LiftPen();
+    ESP32Program::Get().GetPenHolder().Lift();
 }
 
 void PCControlState::ReadAndParseCommands()
 {
     uint8_t* end = WifiInterface::ReadBytesFromClient(s_Data.ReadBuffer, s_Data.ReadBufferSize);
-    int commandCount = s_Data.ReadBuffer[0];
+    unsigned short commandCount = ((unsigned short)s_Data.ReadBuffer[0]) << 8 | ((unsigned short)s_Data.ReadBuffer[1]);
 
     // Error check
-    if (end - s_Data.ReadBuffer != 1 + commandCount * sizeof(MachineCommand))
+    if (end - s_Data.ReadBuffer != 2 + commandCount * sizeof(MachineCommand))
     {
         Serial.println("Error in ReadAndParseCommands");
+        Serial.println(2 + commandCount * sizeof(MachineCommand));
         ESP32Program::Get().SwitchState(State::Menu);
         return;
     }
@@ -142,7 +145,7 @@ void PCControlState::ReadAndParseCommands()
     MachineCommand command;
     for (int i = 0; i < commandCount; i++)
     {
-        memcpy(&command, s_Data.ReadBuffer + 1 + i * sizeof(MachineCommand), sizeof(MachineCommand));
+        memcpy(&command, s_Data.ReadBuffer + 2 + i * sizeof(MachineCommand), sizeof(MachineCommand));
         commandBuffer.PushCommand(command);
     }
 }

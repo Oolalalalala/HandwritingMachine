@@ -72,5 +72,5 @@ void ManualWritingState::OnUpdate(float dt)
 
 void ManualWritingState::OnExit()
 {
-
+    ESP32Program::Get().GetPenHolder().Lift();
 }

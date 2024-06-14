@@ -28,7 +28,7 @@ private:
     {
         float StrokeSegmentLength = 1.0f; // (mm)
         float StrokeSpeed = 20.0f; // (mm/s)
-        float HoverSpeed = 10.0f; // (mm/s)
+        float HoverSpeed = 20.0f; // (mm/s)
     } m_Config;
 
     long m_StrokeSegmentTime; // (us) Cached value for the time it takes to draw a stroke segment
